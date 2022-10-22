@@ -1,0 +1,7 @@
+#!/bin/bash
+rm -rf build
+rm -rf dist
+python3 -m PyInstaller "BasicApp Linux.spec"
+cd dist
+tar -zcvf basicapp.tar.gz "BasicApp"
+cd ..
