@@ -1,3 +1,5 @@
+"""Example of a widget that will display an image at proper aspect ratio and always completely fill the widget area.
+This is a slightly more complex version that allows for some more options"""
 from kivy.app import App
 from kivy.uix.image import Image
 from kivy.properties import ObjectProperty, StringProperty, ListProperty, BooleanProperty, AliasProperty, NumericProperty, DictProperty

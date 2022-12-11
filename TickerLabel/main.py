@@ -1,3 +1,4 @@
+"""Example of a custom label that will 'ticker' scroll a long line of text."""
 from kivy.app import App
 from kivy.properties import NumericProperty, ObjectProperty, StringProperty
 from kivy.clock import Clock

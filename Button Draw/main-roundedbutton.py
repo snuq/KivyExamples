@@ -1,3 +1,6 @@
+"""
+Simple example of a custom rounded button widget
+"""
 from kivy.app import App
 from kivy.lang.builder import Builder
 KV = """

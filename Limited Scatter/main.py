@@ -1,3 +1,4 @@
+"""Example of a customized scatterlayout that prevents the content from being scrolled out of the visible area."""
 from kivy.app import App
 from scatterlayout import *
 KV = """

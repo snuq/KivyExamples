@@ -1,3 +1,6 @@
+"""
+Example of a themed colored button that fades smoothly between the clicked and unclicked states.
+"""
 from kivy.app import App
 from kivy.animation import Animation
 from kivy.properties import ColorProperty, ObjectProperty
@@ -10,13 +13,14 @@ Builder.load_string("""
 """)
 
 class SmoothButton(Button):
-    smoothcolor = ColorProperty((0,1,0,1))
+    smoothcolor = ColorProperty((0, 1, 0, 1))
     smoothanimate = ObjectProperty(allownone=True)
+
     def on_state(self, *_):
         if self.state == 'normal':
-            color = (0,1,0,1)
+            color = (0, 1, 0, 1)
         else:
-            color = (2,0,0,1)
+            color = (2, 0, 0, 1)
         self.smoothanimate = Animation(smoothcolor=color, duration=0.25)
         self.smoothanimate.start(self)
 

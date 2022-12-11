@@ -1,3 +1,4 @@
+"""Example of a custom TextInput that responds to the enter key"""
 from kivy.app import App
 from kivy.uix.textinput import TextInput
 from kivy.lang.builder import Builder

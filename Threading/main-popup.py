@@ -1,3 +1,5 @@
+"""Example showing how to use a popup to run a thread.
+This is useful to lock the interface while something is being calculated."""
 import time
 import threading
 from kivy.app import App

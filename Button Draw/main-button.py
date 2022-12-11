@@ -1,3 +1,6 @@
+"""
+Example of a custom rounded button widget with shadow effects.
+"""
 from kivy.app import App
 from kivy.animation import Animation
 from kivy.uix.button import Button

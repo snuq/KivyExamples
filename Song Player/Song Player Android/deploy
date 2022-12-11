@@ -1,3 +1,0 @@
-#!/bin/bash
-/home/kivy/.buildozer/android/platform/android-sdk/platform-tools/adb connect 192.168.0.100:5555
-buildozer android deploy run logcat

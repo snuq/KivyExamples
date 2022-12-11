@@ -1,3 +1,6 @@
+"""
+Example that demonstrates how to save a crashlog into a text file for later use.
+"""
 import os
 from kivy.app import App
 from kivy.logger import Logger, LoggerHistory

@@ -2,6 +2,7 @@ import kivy
 from kivy.uix.scatterlayout import ScatterLayout
 
 class LimitedScatter(ScatterLayout):
+    """Modified ScatterLayout that prevents the content from being scrolled out of the visible area."""
     def on_transform_with_touch(self, touch):
         limit_pos = self.parent.pos
         limit_size = self.parent.size

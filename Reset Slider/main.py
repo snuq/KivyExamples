@@ -1,3 +1,4 @@
+"""Example showing a custom Slider widget that can be reset to default with a double-click."""
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.slider import Slider

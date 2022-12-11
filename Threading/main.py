@@ -1,3 +1,4 @@
+"""Example showing safe usage of a thread in Kivy."""
 import time
 from kivy.app import App
 from kivy.properties import ObjectProperty, BooleanProperty, NumericProperty

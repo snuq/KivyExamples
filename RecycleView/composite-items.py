@@ -1,3 +1,4 @@
+"""Example showing how to use complex widgets as RecycleView items."""
 from kivy.app import App
 from kivy.properties import ObjectProperty, StringProperty, ListProperty, BooleanProperty, AliasProperty, NumericProperty, DictProperty
 from kivy.uix.boxlayout import BoxLayout

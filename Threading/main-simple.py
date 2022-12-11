@@ -1,3 +1,4 @@
+"""Very basic threading example."""
 import time
 import threading
 from kivy.app import App

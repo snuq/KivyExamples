@@ -1,3 +1,4 @@
+"""Example showing how to use RecycleView to show a basic grid of files from a directory."""
 import os
 from kivy.app import App
 from kivy.properties import ObjectProperty, StringProperty, ListProperty, BooleanProperty, AliasProperty, NumericProperty, DictProperty

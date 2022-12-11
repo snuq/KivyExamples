@@ -1,3 +1,4 @@
+"""Example showing how to remove elements from a RecycleView.  This version includes animations for element removal."""
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.animation import Animation

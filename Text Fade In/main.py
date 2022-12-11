@@ -1,3 +1,4 @@
+"""Example showing how to fade text in using Kivy's animation."""
 from kivy.app import App
 from kivy.animation import Animation
 from kivy.properties import StringProperty, ObjectProperty

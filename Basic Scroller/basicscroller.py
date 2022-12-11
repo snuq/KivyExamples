@@ -44,6 +44,13 @@ Builder.load_string("""
 """)
 
 class ScrollBar(BoxLayout):
+    """
+    Base class for a basic scrollbar widget that can control a set ScrollView.
+    This class itself should not be used, use ScrollBarX or ScrollBarY for horizontal or vertical scrolling.
+    The 'scroller' variable must be set to the ScrollView widget that should be controlled.
+    'bar_color' and 'bar_inactive_color' can be set to a rgba color.
+    """
+
     scroll = NumericProperty()
     scroller = ObjectProperty(allownone=True)
     scroll_wheel_distance = NumericProperty('20sp')
@@ -121,6 +128,8 @@ class ScrollBar(BoxLayout):
 
 
 class ScrollBarX(ScrollBar):
+    """Horizontal scrollbar widget.  See 'ScrollBar' for more information."""
+
     scroll = NumericProperty(0.)
     def _get_hbar(self):
         vw = self.viewport_size[0]
@@ -167,6 +176,8 @@ class ScrollBarX(ScrollBar):
 
 
 class ScrollBarY(ScrollBar):
+    """Vertical scrollbar widget.  See 'ScrollBar' for more information."""
+
     scroll = NumericProperty(1.)
     def _get_vbar(self):
         vh = self.viewport_size[1]
@@ -213,6 +224,10 @@ class ScrollBarY(ScrollBar):
 
 
 class BasicScroller(StencilView):
+    """
+    Simplified version of Kivy's ScrollView.  Removes scrollbars and any touch control.
+    """
+
     scroll_x = NumericProperty(0.)
     scroll_y = NumericProperty(1.)
     viewport_size = ListProperty([0, 0])
@@ -452,6 +467,15 @@ class BasicScroller(StencilView):
 
 
 class TouchScroller(BasicScroller):
+    """
+    Modified version of Kivy's ScrollView widget, allows for finer control over touch events.
+    allow_middle_mouse: set this to True to enable scrolling with the middle mouse button (blocks middle mouse clicks on child widgets).
+    allow_flick: set this to True to enable touch 'flicks' to scroll the view.
+    allow_drag: Set this to True to enable click-n-drag scrolling within the scrollview itself.
+    allow_wheel: set this to True to enable scrolling via the mouse wheel.
+    exclude_widgets: ListProperty, add any child widgets to this, and they will receive all touches on them, blocking any touch controlls of this widget within their bounds.
+    """
+
     scroll_distance = NumericProperty(_scroll_distance)
     scroll_timeout = NumericProperty(_scroll_timeout)
     scroll_wheel_distance = NumericProperty('20sp')

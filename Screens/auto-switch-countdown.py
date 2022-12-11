@@ -1,3 +1,5 @@
+"""Example showing a screen layout that will automatically change screens after a period of time.
+This more complex version also displays a countdown timer for the switch."""
 from kivy.app import App
 from kivy.properties import NumericProperty
 from kivy.uix.screenmanager import Screen, ScreenManager
@@ -18,7 +20,7 @@ Builder.load_string("""
 class Screen1(Screen):
     count = NumericProperty()
     def on_enter(self):
-        self.count = 3
+        self.count = 5
         Clock.schedule_once(self.update_count, 1)
 
     def update_count(self, *_):

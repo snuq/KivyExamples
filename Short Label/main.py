@@ -1,3 +1,4 @@
+"""Example showing how to make a label that is only as wide as its text."""
 from kivy.app import App
 from kivy.lang.builder import Builder
 KV = """

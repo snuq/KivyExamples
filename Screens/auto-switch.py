@@ -1,3 +1,4 @@
+"""Example showing a screen layout that will automatically change screens after a period of time."""
 from kivy.app import App
 from kivy.uix.screenmanager import Screen
 from kivy.lang import Builder

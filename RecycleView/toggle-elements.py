@@ -1,3 +1,4 @@
+"""Example showing how to use RecycleView with elements that need to change their own variables."""
 from kivy.app import App
 from kivy.properties import ObjectProperty, NumericProperty, ListProperty
 from kivy.uix.recycleview.views import RecycleDataViewBehavior

@@ -1,3 +1,6 @@
+"""
+Example that demonstrates loading an image directly from a string in memory.
+"""
 from io import BytesIO
 from kivy.app import App
 from kivy.uix.image import Image

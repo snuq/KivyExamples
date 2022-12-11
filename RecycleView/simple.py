@@ -1,3 +1,4 @@
+"""Example of how to easily call another widget from RecycleView elements."""
 from kivy.app import App
 from kivy.properties import ObjectProperty, StringProperty, ListProperty, BooleanProperty, AliasProperty, NumericProperty, DictProperty
 from kivy.uix.button import Button

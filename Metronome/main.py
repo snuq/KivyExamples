@@ -1,3 +1,4 @@
+"""Example showing how to create a metronome widget to show how animations and threads are done in Kivy"""
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import ObjectProperty, StringProperty, ListProperty, BooleanProperty, NumericProperty, DictProperty

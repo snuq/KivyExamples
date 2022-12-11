@@ -1,3 +1,6 @@
+"""
+Simple example showing changing a button's background color based on click state.
+"""
 from kivy.app import App
 from kivy.lang.builder import Builder
 KV = """

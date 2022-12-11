@@ -1,3 +1,6 @@
+"""
+An example of how to store a popup dialog in the app class to help make popup management easier.
+"""
 from kivy.app import App
 from kivy.properties import ObjectProperty
 from kivy.uix.boxlayout import BoxLayout

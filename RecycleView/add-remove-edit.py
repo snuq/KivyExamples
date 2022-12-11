@@ -1,3 +1,4 @@
+"""Example showing advanced usage of RecycleView to add, remove and edit elements in a list."""
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.animation import Animation

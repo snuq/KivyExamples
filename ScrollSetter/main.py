@@ -1,3 +1,4 @@
+"""Example showing a custom widget that presents a touch-friendly method of selecting an item from a list."""
 from kivy.app import App
 from smoothsetting import SmoothSetting
 from kivy.lang.builder import Builder

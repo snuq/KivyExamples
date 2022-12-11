@@ -1,3 +1,4 @@
+"""Basic example of how to use a RecycleView widget."""
 from kivy.app import App
 from kivy.properties import ListProperty
 from kivy.lang.builder import Builder

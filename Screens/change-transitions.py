@@ -1,3 +1,4 @@
+"""Example showing how to use multiple transitions with multiple screens."""
 from kivy.app import App
 from kivy.uix.screenmanager import Screen, SlideTransition, FadeTransition, SwapTransition
 from kivy.lang import Builder

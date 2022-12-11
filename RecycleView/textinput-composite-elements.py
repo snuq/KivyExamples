@@ -1,3 +1,5 @@
+"""Example showing how to properly handle RecycleView items that can have edit-able data.
+This more complex version also shows how to use complex widgets in a RecycleView"""
 from kivy.app import App
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty, ListProperty
 from kivy.uix.recycleview.views import RecycleDataViewBehavior

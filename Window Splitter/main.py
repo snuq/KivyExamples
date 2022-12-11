@@ -1,3 +1,4 @@
+"""Example showing an advanced interface with split-able areas similar to Blender."""
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import ObjectProperty, StringProperty, ListProperty, BooleanProperty, AliasProperty, NumericProperty, DictProperty

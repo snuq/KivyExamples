@@ -1,6 +1,8 @@
+"""Example that shows how to store multiple kivy properties in an object.
+This is useful for grouping large amounts of variables such as theme-related properties into one object."""
 from kivy.app import App
 from kivy.properties import StringProperty, NumericProperty
-from kivy.uix.widget import Widget
+from kivy.event import EventDispatcher
 from kivy.uix.boxlayout import BoxLayout
 from kivy.lang.builder import Builder
 KV = """
@@ -21,7 +23,7 @@ class RootLayout(BoxLayout):
         app.data.first = 'first variable set'
         app.data.second = 100
 
-class DataStorage(Widget):
+class DataStorage(EventDispatcher):
     first = StringProperty('Not Set')
     second = NumericProperty(0)
 

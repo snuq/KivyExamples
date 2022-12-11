@@ -1,3 +1,4 @@
+"""Example showing how to crease RecycleView items with different heights"""
 from kivy.app import App
 from kivy.properties import ListProperty
 from kivy.lang.builder import Builder

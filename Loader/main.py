@@ -1,3 +1,4 @@
+"""Example of how a modal popup can be used to block the interface with an animation while a long task is being performed."""
 import threading
 import time
 from kivy.clock import Clock

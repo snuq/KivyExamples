@@ -1,21 +1,16 @@
+"""
+An example that shows how to use the custom 'basicscroller' widgets that implement scrollbars that can be used with a kivy scrollview.
+"""
 from kivy.app import App
 from basicscroller import *
 from kivy.config import Config
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
 KV = """
-#BoxLayout:
-#    TouchScroller:
-#        Button:
-#            size_hint: None, None
-#            size: 1000, 1000
-#            text: 'woo'
-
 BoxLayout:
     orientation: 'vertical'
     BasicScroller:
         exclude_widgets: [innerScrollerBar]
-        #allow_wheel: False
         allow_drag: False
         id: outerScroller
         BoxLayout:
@@ -25,8 +20,8 @@ BoxLayout:
                 size_hint: None, 1
                 width: 400
                 TouchScroller:
-                    allow_drag: False
-                    allow_flick: False
+                    allow_drag: True
+                    allow_flick: True
                     id: innerScroller
                     BoxLayout:
                         orientation: 'vertical'

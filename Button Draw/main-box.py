@@ -1,3 +1,6 @@
+"""
+Some examples of custom widget drawing to create shadow effects and rounded buttons.
+"""
 from kivy.app import App
 from kivy.animation import Animation
 from kivy.uix.button import Button
