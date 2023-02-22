@@ -1,7 +1,7 @@
 import time
 import threading
 from kivy.app import App
-from kivy.uix.popup import Popup
+from kivy.uix.modalview import ModalView
 from kivy.uix.progressbar import ProgressBar
 from kivy.uix.button import Button
 from kivy.properties import ObjectProperty
@@ -13,7 +13,8 @@ class Test(App):
 
     def run_thread(self, *_):
         self.progressbar = ProgressBar(max=100)
-        self.popup = Popup(title='Running Thread', content=self.progressbar, auto_dismiss=False)
+        self.popup = ModalView(auto_dismiss=False)
+        self.popup.add_widget(self.progressbar)
         self.popup.open()
         thread = threading.Thread(target=self.thread_function)
         thread.start()
