@@ -22,16 +22,18 @@ class AnimatedWidget(Button):
     animate_pos = ListProperty()
     pos_animator = ObjectProperty(allownone=True)
 
-    def cancel_animation(self):
+    def cancel_animation(self, *_):
         self.pos_animator.cancel(self)
         self.pos_animator = None
 
     def on_animate_pos(self, *_):
-        animation_type = 'in_out_quad'
         if self.pos_animator:  #previous animation is already running, need to stop it
             animation_type = 'out_quad'  #dont smooth 'in' because widget is already moving
             self.cancel_animation()
+        else:  #no animation currently running
+            animation_type = 'in_out_quad'
         self.pos_animator = Animation(pos=(self.animate_pos[0]-self.width/2, self.animate_pos[1]-self.height/2), t=animation_type, duration=1)
+        self.pos_animator.bind(on_complete=self.cancel_animation)  #calls cancel_animation when done moving to clean up
         self.pos_animator.start(self)
 
 class Test(App):
