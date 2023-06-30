@@ -5,9 +5,6 @@ from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.togglebutton import ToggleButton
 from kivy.lang.builder import Builder
 KV = """
-<RecycleItem>:
-    on_release: self.owner.data[self.index]['state'] = self.state
-
 RecycleView:
     data: app.data
     viewclass: 'RecycleItem'
@@ -21,8 +18,11 @@ RecycleView:
 """
 
 class RecycleItem(RecycleDataViewBehavior, ToggleButton):
-    owner = ObjectProperty()
-    index = NumericProperty(0)
+    owner = ObjectProperty()  #should be set to the location where the data list is stored for easy access
+    index = NumericProperty(0)  #store the data index locally to make it easier to update original data
+
+    def on_state(self, *_):  #Variable must be copied back to data list after being updated locally
+        self.owner.data[self.index]['state'] = self.state
 
     def refresh_view_attrs(self, rv, index, data):
         self.index = index
