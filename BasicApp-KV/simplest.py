@@ -1,0 +1,1 @@
+from kivy import app; app.runTouchApp()
