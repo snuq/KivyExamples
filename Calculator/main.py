@@ -26,13 +26,13 @@ Builder.load_string("""
     BoxLayout:
         size_hint_y: .25
         FormattedButton:
-        FormattedButton:
             text: 'Clr'
             on_release: calculator_input.text = ''
         FormattedButton:
             text: '<-'
             on_release: calculator_input.do_backspace()
         FormattedButton:
+            size_hint_x: 2
             text: '='
             on_release: calculator_input.text = app.calculate(calculator_input.text)
 """)
