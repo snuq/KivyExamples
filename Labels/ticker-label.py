@@ -7,21 +7,33 @@ from kivy.uix.label import Label
 from kivy.lang.builder import Builder
 KV = """
 <-TickerLabel>:
+    canvas.before:
+        StencilPush
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        StencilUse
     canvas:
-        Color:
-            rgba: 1, 1, 1, 1
         Rectangle:
             texture: self.texture
             size: self.texture_size
-            pos: 0 - self.ticker_offset, int(self.center_y - self.texture_size[1] / 2.)
+            pos: self.x - self.ticker_offset, self.center_y - self.texture_size[1] / 2
+    canvas.after:
+        StencilUnUse
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        StencilPop
 
 BoxLayout:
-    orientation: 'vertical'
-    TickerLabel:
-        text: 'This is a long line of text that should start scrolling automatically when the label is created'
-    TickerLabel:
-        text: 'This is a long line of text that should start scrolling automatically when the label is created, this one is longer and should scroll at the same speed.'
-
+    Widget:
+    BoxLayout:
+        orientation: 'vertical'
+        TickerLabel:
+            text: 'This is a long line of text that should start scrolling automatically when the label is created'
+        TickerLabel:
+            text: 'This is a long line of text that should start scrolling automatically when the label is created, this one is longer and should scroll at the same speed.'
+    Widget:
 """
 
 class TickerLabel(Label):
