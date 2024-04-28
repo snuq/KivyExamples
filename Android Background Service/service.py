@@ -5,7 +5,7 @@ from jnius import autoclass
 counter = 0
 
 
-def receive_command_from_app(message):
+def receive_command_from_app(message):  #this function will be executed in the osc_server's thread, so the variables it sets could change at any time during the main loop below
     #message channels can be used to communicate many different things or run multiple commands
     if message == 'Reset':
         global counter
