@@ -30,3 +30,9 @@ while True:  #This loop must not be broken out of! This will cause android to co
         #Service is all done, ask the app to terminate the service
         background_service = autoclass('com.snuq.servicetest.ServiceServicetestbg')
         osc_client.send_message(b"/service_stop_request", ['Stop'.encode("utf8")])
+
+    if counter > 40:
+        #You CAN kill the service like this, but be warned that the app will not know it has ended!
+        pythonactivity = autoclass("org.kivy.android.PythonService")
+        m_service = pythonactivity.mService
+        m_service.stopSelf()  #ends the service
