@@ -1,4 +1,5 @@
 from math import copysign
+from kivy.clock import Clock
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import *
@@ -23,45 +24,36 @@ BoxLayout:
 
 class LCARSBox(BoxLayout):
     border_color = ColorProperty()
-    borders = ListProperty([0, 0, 0, 0])  #left, top, right, bottom
+    borders = ListProperty([0, 0, 0, 0])  #Set the size of each border edge in pixels: left, top, right, bottom
     border_cutoff_top = ListProperty([0, 0])  #top-left, top-right
     border_cutoff_bottom = ListProperty([0, 0])  #bottom-left, bottom-right
     border_cutoff_left = ListProperty([0, 0])  #left-top, left-bottom
     border_cutoff_right = ListProperty([0, 0])  #right-top, right-bottom
     inner_arc_divisor = NumericProperty(4)
     extra_padding = BooleanProperty(True)
+    _redraw_cache = None
 
-    def on_size(self, *_):
-        self.redraw_arcs()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.bind(size=self.redraw_arcs)
+        self.bind(pos=self.redraw_arcs)
+        self.bind(border_color=self.redraw_arcs)
+        self.bind(borders=self.redraw_arcs)
+        self.bind(border_cutoff_top=self.redraw_arcs)
+        self.bind(border_cutoff_bottom=self.redraw_arcs)
+        self.bind(border_cutoff_left=self.redraw_arcs)
+        self.bind(border_cutoff_right=self.redraw_arcs)
+        self.bind(inner_arc_divisor=self.redraw_arcs)
+        self.bind(extra_padding=self.redraw_arcs)
 
-    def on_pos(self, *_):
-        self.redraw_arcs()
-
-    def on_borders(self, *_):
-        self.redraw_arcs()
-
-    def on_border_color(self, *_):
-        self.redraw_arcs()
-
-    def on_border_cutoff_top(self, *_):
-        self.redraw_arcs()
-
-    def on_border_cutoff_bottom(self, *_):
-        self.redraw_arcs()
-
-    def on_border_cutoff_left(self, *_):
-        self.redraw_arcs()
-
-    def on_border_cutoff_right(self, *_):
-        self.redraw_arcs()
-
-    def generate_arc(self, arc_start_x, arc_start_y, arc_width, arc_height, inverse=False):
+    def generate_arc(self, arc_start_x, arc_start_y, arc_width, arc_height, concave=False):
+        #Generate points for a 32 segment arc at the given position and size.
         arc = 0.0, 0.049068, 0.098017, 0.146730, 0.195090, 0.242980, 0.290285, 0.336890, 0.382683, 0.427555, 0.471397, 0.514103, 0.555570, 0.595699, 0.634393, 0.671559, 0.707107, 0.740951, 0.773010, 0.803208, 0.831470, 0.857729, 0.881921, 0.903989, 0.923880, 0.941544, 0.956940, 0.970031, 0.980785, 0.989177, 0.995185, 0.998795, 1.0
         arc_points = []
         total_points = len(arc)
         for index, arc_point in enumerate(arc):
             arc_point_reverse = arc[total_points - 1 - index]
-            if inverse:
+            if concave:
                 x = arc_start_x + (arc_point * arc_width)
                 y = arc_start_y + ((1 - arc_point_reverse) * arc_height)
             else:
@@ -70,7 +62,12 @@ class LCARSBox(BoxLayout):
             arc_points.extend([x, y])
         return arc_points
 
-    def redraw_arcs(self):
+    def redraw_arcs(self, *_):
+        #prevent redraw being called multiple times in one frame by all the bound variables
+        if self._redraw_cache is None:
+            self._redraw_cache = Clock.schedule_once(self._redraw_arcs, -1)
+
+    def _redraw_arcs(self, *_):
         border_left, border_top, border_right, border_bottom = self.borders
         cut_left_top, cut_left_bottom = self.border_cutoff_left
         cut_right_top, cut_right_bottom = self.border_cutoff_right
@@ -88,6 +85,7 @@ class LCARSBox(BoxLayout):
         mid_x = self.x + int(self.width / 2)
 
         def generate_arc_corner(v_edge_x, v_edge_y, h_edge_x, h_edge_y, v_edge_width, h_edge_width):
+            #Generates the rounded corner mesh points
             arc_edge_shorter = min(abs(v_edge_width), abs(h_edge_width))
             arc_size_x = copysign(arc_edge_shorter, v_edge_width)
             arc_size_y = copysign(arc_edge_shorter, h_edge_width)
@@ -100,6 +98,7 @@ class LCARSBox(BoxLayout):
             return arc_edge_shorter / self.inner_arc_divisor, mesh_points
 
         def generate_box(left, top, right, bottom):
+            #Generates the mesh points for a basic box
             return [left, bottom, left, top, right, top, right, bottom]
 
         mesh_contours = []
@@ -167,6 +166,7 @@ class LCARSBox(BoxLayout):
             self.padding = border_left + max(left_extra_padding), border_top + max(top_extra_padding), border_right + max(right_extra_padding), border_bottom + max(bottom_extra_padding)
         else:
             self.padding = border_left, border_top, border_right, border_bottom
+        self._redraw_cache = None
 
 
 class Test(App):
