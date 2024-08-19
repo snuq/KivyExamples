@@ -2,6 +2,7 @@ from math import copysign
 from kivy.clock import Clock
 from kivy.app import App
 from kivy.uix.widget import Widget
+from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import *
 from kivy.graphics import Color, Mesh
@@ -11,6 +12,7 @@ KV = """
 BoxLayout:
     padding: 40, 40
     LCARSBox:
+        orientation: 'vertical'
         border_color: 1, 0, 0, 1
         border_cutoff_top: 200, 0
         border_cutoff_right: 100, -80
@@ -19,13 +21,24 @@ BoxLayout:
         inner_arc_divisor: 2
         rounding: True
         rounding_limit: 10
-        Button:
-            opacity: 0.5
+        spacing: 10
+        LCARSButton:
+            background_color_up: 1, 0.3, 0.3, 1
+            size_hint_y: None
+            height: 40
             text: 'Test'
+        LCARSButton:
+            background_color_up: 0.3, 0.3, 1, 1
+            size_hint_y: None
+            height: 40
+            text: 'Test 2'
+
 """
 
 
 class LCARS(Widget):
+    _redraw_cache = None
+
     def generate_arc(self, arc_start_x, arc_start_y, arc_width, arc_height, concave=False):
         #Generate points for a 32 segment arc at the given position and size.
         arc = 0.0, 0.049068, 0.098017, 0.146730, 0.195090, 0.242980, 0.290285, 0.336890, 0.382683, 0.427555, 0.471397, 0.514103, 0.555570, 0.595699, 0.634393, 0.671559, 0.707107, 0.740951, 0.773010, 0.803208, 0.831470, 0.857729, 0.881921, 0.903989, 0.923880, 0.941544, 0.956940, 0.970031, 0.980785, 0.989177, 0.995185, 0.998795, 1.0
@@ -88,6 +101,60 @@ class LCARS(Widget):
             mesh_points.extend([left, bottom])
         return mesh_points
 
+    def redraw_arcs(self, *_):
+        #prevent redraw being called multiple times in one frame by all the bound variables
+        if self._redraw_cache is None:
+            self._redraw_cache = Clock.schedule_once(self._redraw_arcs, -1)
+
+    def _redraw_arcs(self, *_):
+        pass
+
+
+class LCARSButton(LCARS, Button):
+    round_left = BooleanProperty(True)
+    round_right = BooleanProperty(True)
+    rounding_limit = NumericProperty(None, allownone=True)
+    color = ColorProperty([0, 0, 0, 1])
+    background_color_up = ColorProperty([1, 1, 1, 1])
+    background_color_down = ColorProperty(None, allownone=True)
+    background_color = ColorProperty([0, 0, 0, 0])
+    background_color_draw = None
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.background_color_draw = Color(rgba=self.background_color_up)
+        self.bind(size=self.redraw_arcs)
+        self.bind(pos=self.redraw_arcs)
+        self.bind(round_left=self.redraw_arcs)
+        self.bind(round_right=self.redraw_arcs)
+        self.bind(background_color_up=self.on_state)
+        self.bind(background_color_down=self.on_state)
+
+    def on_state(self, *_):
+        if self.state == 'down':
+            if self.background_color_down is None:
+                self.background_color_draw.rgba = self.background_color_up[:3]+[0.7]
+            else:
+                self.background_color_draw.rgba = self.background_color_down
+        else:
+            self.background_color_draw.rgba = self.background_color_up
+
+    def _redraw_arcs(self, *_):
+        self.canvas.before.clear()
+        self.canvas.before.add(self.background_color_draw)
+        mesh_contour = self.generate_rounded_box(self.x, self.top, self.right, self.y, round_tl=self.round_left, round_tr=self.round_right, round_bl=self.round_left, round_br=self.round_right, round_limit=self.rounding_limit)
+
+        tess = Tesselator()
+        tess.add_contour(mesh_contour)
+        success = tess.tesselate()
+        self.canvas.before.clear()
+        self.canvas.before.add(self.background_color_draw)
+        if success:
+            for vertices, indices in tess.meshes:
+                self.canvas.before.add(Mesh(vertices=vertices, indices=indices, mode="triangle_fan"))
+
+        self._redraw_cache = None
+
 
 class LCARSLayout(LCARS):
     border_color = ColorProperty()
@@ -100,7 +167,6 @@ class LCARSLayout(LCARS):
     extra_padding = BooleanProperty(True)
     rounding = BooleanProperty(False)
     rounding_limit = NumericProperty(None, allownone=True)
-    _redraw_cache = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -116,11 +182,6 @@ class LCARSLayout(LCARS):
         self.bind(extra_padding=self.redraw_arcs)
         self.bind(rounding=self.redraw_arcs)
         self.bind(rounding_limit=self.redraw_arcs)
-
-    def redraw_arcs(self, *_):
-        #prevent redraw being called multiple times in one frame by all the bound variables
-        if self._redraw_cache is None:
-            self._redraw_cache = Clock.schedule_once(self._redraw_arcs, -1)
 
     def _redraw_arcs(self, *_):
         border_left, border_top, border_right, border_bottom = self.borders
