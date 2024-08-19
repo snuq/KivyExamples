@@ -24,6 +24,41 @@ BoxLayout:
 
 
 class LCARS(Widget):
+    def generate_arc(self, arc_start_x, arc_start_y, arc_width, arc_height, concave=False):
+        #Generate points for a 32 segment arc at the given position and size.
+        arc = 0.0, 0.049068, 0.098017, 0.146730, 0.195090, 0.242980, 0.290285, 0.336890, 0.382683, 0.427555, 0.471397, 0.514103, 0.555570, 0.595699, 0.634393, 0.671559, 0.707107, 0.740951, 0.773010, 0.803208, 0.831470, 0.857729, 0.881921, 0.903989, 0.923880, 0.941544, 0.956940, 0.970031, 0.980785, 0.989177, 0.995185, 0.998795, 1.0
+        arc_points = []
+        total_points = len(arc)
+        for index, arc_point in enumerate(arc):
+            arc_point_reverse = arc[total_points - 1 - index]
+            if concave:
+                x = arc_start_x + (arc_point * arc_width)
+                y = arc_start_y + ((1 - arc_point_reverse) * arc_height)
+            else:
+                x = arc_start_x + ((1 - arc_point_reverse) * arc_width)
+                y = arc_start_y + (arc_point * arc_height)
+            arc_points.extend([x, y])
+        return arc_points
+
+    def generate_arc_corner(self, v_edge_x, v_edge_y, h_edge_x, h_edge_y, v_edge_width, h_edge_width, inner_arc_divisor):
+        #Generates the rounded corner mesh points
+        arc_edge_shorter = min(abs(v_edge_width), abs(h_edge_width))
+        arc_size_x = copysign(arc_edge_shorter, v_edge_width)
+        arc_size_y = copysign(arc_edge_shorter, h_edge_width)
+        inner_arc_size_x = arc_size_x / inner_arc_divisor
+        inner_arc_size_y = arc_size_y / inner_arc_divisor
+        outer_arc = self.generate_arc(v_edge_x, h_edge_y - arc_size_y, arc_size_x, arc_size_y)
+        inner_arc = self.generate_arc(v_edge_x + v_edge_width + inner_arc_size_x, h_edge_y - h_edge_width, 0-inner_arc_size_x, 0-inner_arc_size_y, True)
+        #                     vertical edge inner           vertical edge outer                horizontal edge outer        horizonntal edge inner
+        mesh_points = [v_edge_x + v_edge_width, v_edge_y] + [v_edge_x, v_edge_y] + outer_arc + [h_edge_x, h_edge_y] + [h_edge_x, h_edge_y - h_edge_width] + inner_arc
+        return arc_edge_shorter / inner_arc_divisor, mesh_points
+
+    def generate_box(self, left, top, right, bottom):
+        #Generates the mesh points for a basic box
+        return [left, bottom, left, top, right, top, right, bottom]
+
+
+class LCARSLayout(LCARS):
     border_color = ColorProperty()
     borders = ListProperty([0, 0, 0, 0])  #Set the size of each border edge in pixels: left, top, right, bottom
     border_cutoff_top = ListProperty([0, 0])  #top-left, top-right
@@ -47,22 +82,6 @@ class LCARS(Widget):
         self.bind(inner_arc_divisor=self.redraw_arcs)
         self.bind(extra_padding=self.redraw_arcs)
 
-    def generate_arc(self, arc_start_x, arc_start_y, arc_width, arc_height, concave=False):
-        #Generate points for a 32 segment arc at the given position and size.
-        arc = 0.0, 0.049068, 0.098017, 0.146730, 0.195090, 0.242980, 0.290285, 0.336890, 0.382683, 0.427555, 0.471397, 0.514103, 0.555570, 0.595699, 0.634393, 0.671559, 0.707107, 0.740951, 0.773010, 0.803208, 0.831470, 0.857729, 0.881921, 0.903989, 0.923880, 0.941544, 0.956940, 0.970031, 0.980785, 0.989177, 0.995185, 0.998795, 1.0
-        arc_points = []
-        total_points = len(arc)
-        for index, arc_point in enumerate(arc):
-            arc_point_reverse = arc[total_points - 1 - index]
-            if concave:
-                x = arc_start_x + (arc_point * arc_width)
-                y = arc_start_y + ((1 - arc_point_reverse) * arc_height)
-            else:
-                x = arc_start_x + ((1 - arc_point_reverse) * arc_width)
-                y = arc_start_y + (arc_point * arc_height)
-            arc_points.extend([x, y])
-        return arc_points
-
     def redraw_arcs(self, *_):
         #prevent redraw being called multiple times in one frame by all the bound variables
         if self._redraw_cache is None:
@@ -85,23 +104,6 @@ class LCARS(Widget):
         mid_y = self.y + int(self.height / 2)
         mid_x = self.x + int(self.width / 2)
 
-        def generate_arc_corner(v_edge_x, v_edge_y, h_edge_x, h_edge_y, v_edge_width, h_edge_width):
-            #Generates the rounded corner mesh points
-            arc_edge_shorter = min(abs(v_edge_width), abs(h_edge_width))
-            arc_size_x = copysign(arc_edge_shorter, v_edge_width)
-            arc_size_y = copysign(arc_edge_shorter, h_edge_width)
-            inner_arc_size_x = arc_size_x / self.inner_arc_divisor
-            inner_arc_size_y = arc_size_y / self.inner_arc_divisor
-            outer_arc = self.generate_arc(v_edge_x, h_edge_y - arc_size_y, arc_size_x, arc_size_y)
-            inner_arc = self.generate_arc(v_edge_x + v_edge_width + inner_arc_size_x, h_edge_y - h_edge_width, 0-inner_arc_size_x, 0-inner_arc_size_y, True)
-            #                     vertical edge inner           vertical edge outer                horizontal edge outer        horizonntal edge inner
-            mesh_points = [v_edge_x + v_edge_width, v_edge_y] + [v_edge_x, v_edge_y] + outer_arc + [h_edge_x, h_edge_y] + [h_edge_x, h_edge_y - h_edge_width] + inner_arc
-            return arc_edge_shorter / self.inner_arc_divisor, mesh_points
-
-        def generate_box(left, top, right, bottom):
-            #Generates the mesh points for a basic box
-            return [left, bottom, left, top, right, top, right, bottom]
-
         mesh_contours = []
         top_extra_padding = [0]
         bottom_extra_padding = [0]
@@ -110,47 +112,47 @@ class LCARS(Widget):
 
         #top-left area
         if border_left and border_top:
-            arc_edge_shorter, mesh_points = generate_arc_corner(o_left, mid_y + cut_left_top, mid_x - cut_top_left, o_top, border_left, border_top)
+            arc_edge_shorter, mesh_points = self.generate_arc_corner(o_left, mid_y + cut_left_top, mid_x - cut_top_left, o_top, border_left, border_top, self.inner_arc_divisor)
             mesh_contours.append(mesh_points)
             top_extra_padding.append(arc_edge_shorter)
             left_extra_padding.append(arc_edge_shorter)
         elif border_left:
-            mesh_contours.append(generate_box(o_left, o_top, i_left, mid_y + cut_left_top))
+            mesh_contours.append(self.generate_box(o_left, o_top, i_left, mid_y + cut_left_top))
         elif border_top:
-            mesh_contours.append(generate_box(o_left, o_top, mid_x - cut_top_left, i_top))
+            mesh_contours.append(self.generate_box(o_left, o_top, mid_x - cut_top_left, i_top))
 
         #top-right area
         if border_right and border_top:
-            arc_edge_shorter, mesh_points = generate_arc_corner(o_right, mid_y + cut_right_top, mid_x + cut_top_right, o_top, 0-border_right, border_top)
+            arc_edge_shorter, mesh_points = self.generate_arc_corner(o_right, mid_y + cut_right_top, mid_x + cut_top_right, o_top, 0-border_right, border_top, self.inner_arc_divisor)
             mesh_contours.append(mesh_points)
             top_extra_padding.append(arc_edge_shorter)
             right_extra_padding.append(arc_edge_shorter)
         elif border_right:
-            mesh_contours.append(generate_box(i_right, o_top, o_right, mid_y + cut_right_top))
+            mesh_contours.append(self.generate_box(i_right, o_top, o_right, mid_y + cut_right_top))
         elif border_top:
-            mesh_contours.append(generate_box(mid_x + cut_top_right, o_top, o_right, i_top))
+            mesh_contours.append(self.generate_box(mid_x + cut_top_right, o_top, o_right, i_top))
 
         #bottom-left area
         if border_left and border_bottom:
-            arc_edge_shorter, mesh_points = generate_arc_corner(o_left, mid_y - cut_left_bottom, mid_x - cut_bottom_left, o_bottom, border_left, 0-border_bottom)
+            arc_edge_shorter, mesh_points = self.generate_arc_corner(o_left, mid_y - cut_left_bottom, mid_x - cut_bottom_left, o_bottom, border_left, 0-border_bottom, self.inner_arc_divisor)
             mesh_contours.append(mesh_points)
             bottom_extra_padding.append(arc_edge_shorter)
             left_extra_padding.append(arc_edge_shorter)
         elif border_left:
-            mesh_contours.append(generate_box(o_left, mid_y - cut_left_bottom, i_left, o_bottom))
+            mesh_contours.append(self.generate_box(o_left, mid_y - cut_left_bottom, i_left, o_bottom))
         elif border_bottom:
-            mesh_contours.append(generate_box(o_left, i_bottom, mid_x - cut_bottom_left, o_bottom))
+            mesh_contours.append(self.generate_box(o_left, i_bottom, mid_x - cut_bottom_left, o_bottom))
 
         #bottom-right area
         if border_right and border_bottom:
-            arc_edge_shorter, mesh_points = generate_arc_corner(o_right, mid_y - cut_right_bottom, mid_x + cut_bottom_right, o_bottom, 0-border_right, 0-border_bottom)
+            arc_edge_shorter, mesh_points = self.generate_arc_corner(o_right, mid_y - cut_right_bottom, mid_x + cut_bottom_right, o_bottom, 0-border_right, 0-border_bottom, self.inner_arc_divisor)
             mesh_contours.append(mesh_points)
             bottom_extra_padding.append(arc_edge_shorter)
             right_extra_padding.append(arc_edge_shorter)
         elif border_right:
-            mesh_contours.append(generate_box(i_right, mid_y - cut_right_bottom, o_right, o_bottom))
+            mesh_contours.append(self.generate_box(i_right, mid_y - cut_right_bottom, o_right, o_bottom))
         elif border_bottom:
-            mesh_contours.append(generate_box(mid_x - cut_bottom_right, i_bottom, o_right, o_bottom))
+            mesh_contours.append(self.generate_box(mid_x - cut_bottom_right, i_bottom, o_right, o_bottom))
 
         tess = Tesselator()
         for contour in mesh_contours:
@@ -170,7 +172,7 @@ class LCARS(Widget):
         self._redraw_cache = None
 
 
-class LCARSBox(BoxLayout, LCARS):
+class LCARSBox(BoxLayout, LCARSLayout):
     pass
 
 
