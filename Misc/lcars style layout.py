@@ -17,6 +17,8 @@ BoxLayout:
         border_cutoff_left: -80, 100
         borders: [100, 20, 20, 0]
         inner_arc_divisor: 2
+        rounding: True
+        rounding_limit: 10
         Button:
             opacity: 0.5
             text: 'Test'
@@ -57,6 +59,35 @@ class LCARS(Widget):
         #Generates the mesh points for a basic box
         return [left, bottom, left, top, right, top, right, bottom]
 
+    def generate_rounded_box(self, left, top, right, bottom, round_tl=False, round_tr=False, round_bl=False, round_br=False, round_limit=None):
+        #Generates the mesh points for a box that maay have rounded edges
+        #round_ variables: round off one corner of the box, tl=top-left, tr=top-right, bl=bottom-left, br=bottom-right
+        #round_limit: set to an integer to limit the size of the cornr rounding
+
+        width = right - left
+        height = top - bottom
+        round_size = int(min(width, height) / 2)
+        if round_limit is not None and round_size > round_limit:
+            round_size = round_limit
+        mesh_points = []
+        if round_tl:
+            mesh_points.extend(self.generate_arc(left, top - round_size, round_size, round_size))
+        else:
+            mesh_points.extend([left, top])
+        if round_tr:
+            mesh_points.extend(self.generate_arc(right - round_size, top, round_size, 0-round_size, concave=True))
+        else:
+            mesh_points.extend([right, top])
+        if round_br:
+            mesh_points.extend(self.generate_arc(right, bottom + round_size, 0-round_size, 0-round_size))
+        else:
+            mesh_points.extend([right, bottom])
+        if round_bl:
+            mesh_points.extend(self.generate_arc(left + round_size, bottom, 0-round_size, round_size, concave=True))
+        else:
+            mesh_points.extend([left, bottom])
+        return mesh_points
+
 
 class LCARSLayout(LCARS):
     border_color = ColorProperty()
@@ -67,6 +98,8 @@ class LCARSLayout(LCARS):
     border_cutoff_right = ListProperty([0, 0])  #right-top, right-bottom
     inner_arc_divisor = NumericProperty(4)
     extra_padding = BooleanProperty(True)
+    rounding = BooleanProperty(False)
+    rounding_limit = NumericProperty(None, allownone=True)
     _redraw_cache = None
 
     def __init__(self, **kwargs):
@@ -81,6 +114,8 @@ class LCARSLayout(LCARS):
         self.bind(border_cutoff_right=self.redraw_arcs)
         self.bind(inner_arc_divisor=self.redraw_arcs)
         self.bind(extra_padding=self.redraw_arcs)
+        self.bind(rounding=self.redraw_arcs)
+        self.bind(rounding_limit=self.redraw_arcs)
 
     def redraw_arcs(self, *_):
         #prevent redraw being called multiple times in one frame by all the bound variables
@@ -117,9 +152,9 @@ class LCARSLayout(LCARS):
             top_extra_padding.append(arc_edge_shorter)
             left_extra_padding.append(arc_edge_shorter)
         elif border_left:
-            mesh_contours.append(self.generate_box(o_left, o_top, i_left, mid_y + cut_left_top))
+            mesh_contours.append(self.generate_rounded_box(o_left, o_top, i_left, mid_y + cut_left_top, round_tl=self.rounding, round_tr=self.rounding, round_limit=self.rounding_limit))
         elif border_top:
-            mesh_contours.append(self.generate_box(o_left, o_top, mid_x - cut_top_left, i_top))
+            mesh_contours.append(self.generate_rounded_box(o_left, o_top, mid_x - cut_top_left, i_top, round_tl=self.rounding, round_bl=self.rounding, round_limit=self.rounding_limit))
 
         #top-right area
         if border_right and border_top:
@@ -128,9 +163,9 @@ class LCARSLayout(LCARS):
             top_extra_padding.append(arc_edge_shorter)
             right_extra_padding.append(arc_edge_shorter)
         elif border_right:
-            mesh_contours.append(self.generate_box(i_right, o_top, o_right, mid_y + cut_right_top))
+            mesh_contours.append(self.generate_rounded_box(i_right, o_top, o_right, mid_y + cut_right_top, round_tl=self.rounding, round_tr=self.rounding, round_limit=self.rounding_limit))
         elif border_top:
-            mesh_contours.append(self.generate_box(mid_x + cut_top_right, o_top, o_right, i_top))
+            mesh_contours.append(self.generate_rounded_box(mid_x + cut_top_right, o_top, o_right, i_top, round_tr=self.rounding, round_br=self.rounding, round_limit=self.rounding_limit))
 
         #bottom-left area
         if border_left and border_bottom:
@@ -139,9 +174,9 @@ class LCARSLayout(LCARS):
             bottom_extra_padding.append(arc_edge_shorter)
             left_extra_padding.append(arc_edge_shorter)
         elif border_left:
-            mesh_contours.append(self.generate_box(o_left, mid_y - cut_left_bottom, i_left, o_bottom))
+            mesh_contours.append(self.generate_rounded_box(o_left, mid_y - cut_left_bottom, i_left, o_bottom, round_bl=self.rounding, round_br=self.rounding, round_limit=self.rounding_limit))
         elif border_bottom:
-            mesh_contours.append(self.generate_box(o_left, i_bottom, mid_x - cut_bottom_left, o_bottom))
+            mesh_contours.append(self.generate_rounded_box(o_left, i_bottom, mid_x - cut_bottom_left, o_bottom, round_tl=self.rounding, round_bl=self.rounding, round_limit=self.rounding_limit))
 
         #bottom-right area
         if border_right and border_bottom:
@@ -150,9 +185,9 @@ class LCARSLayout(LCARS):
             bottom_extra_padding.append(arc_edge_shorter)
             right_extra_padding.append(arc_edge_shorter)
         elif border_right:
-            mesh_contours.append(self.generate_box(i_right, mid_y - cut_right_bottom, o_right, o_bottom))
+            mesh_contours.append(self.generate_rounded_box(i_right, mid_y - cut_right_bottom, o_right, o_bottom, round_bl=self.rounding, round_br=self.rounding, round_limit=self.rounding_limit))
         elif border_bottom:
-            mesh_contours.append(self.generate_box(mid_x - cut_bottom_right, i_bottom, o_right, o_bottom))
+            mesh_contours.append(self.generate_rounded_box(mid_x - cut_bottom_right, i_bottom, o_right, o_bottom, round_tr=self.rounding, round_br=self.rounding, round_limit=self.rounding_limit))
 
         tess = Tesselator()
         for contour in mesh_contours:
