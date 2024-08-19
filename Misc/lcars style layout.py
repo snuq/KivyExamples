@@ -1,6 +1,7 @@
 from math import copysign
 from kivy.clock import Clock
 from kivy.app import App
+from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import *
 from kivy.graphics import Color, Mesh
@@ -22,7 +23,7 @@ BoxLayout:
 """
 
 
-class LCARSBox(BoxLayout):
+class LCARS(Widget):
     border_color = ColorProperty()
     borders = ListProperty([0, 0, 0, 0])  #Set the size of each border edge in pixels: left, top, right, bottom
     border_cutoff_top = ListProperty([0, 0])  #top-left, top-right
@@ -167,6 +168,10 @@ class LCARSBox(BoxLayout):
         else:
             self.padding = border_left, border_top, border_right, border_bottom
         self._redraw_cache = None
+
+
+class LCARSBox(BoxLayout, LCARS):
+    pass
 
 
 class Test(App):
