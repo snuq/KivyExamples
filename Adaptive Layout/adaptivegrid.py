@@ -1,3 +1,4 @@
+"""Shows how to create a custom GridLayout that will change its colums to adapt to screen orientation."""
 from kivy.app import App
 from kivy.lang.builder import Builder
 from kivy.uix.gridlayout import GridLayout

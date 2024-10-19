@@ -1,3 +1,5 @@
+"""Shows how to create an app variable that will inform widgets if the window size is horizontal orientation or not.
+Useful to create reflow layouts for apps that can run in any screen orientation."""
 from kivy.app import App
 from kivy.core.window import Window
 from kivy.lang.builder import Builder
