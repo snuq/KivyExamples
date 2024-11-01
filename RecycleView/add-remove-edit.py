@@ -38,6 +38,7 @@ KV = """
 
 BoxLayout:
     orientation: 'vertical'
+    spacing: 10
     BoxLayout:
         size_hint_y: .1
         TextInput:
@@ -46,8 +47,6 @@ BoxLayout:
             disabled: not newItem.text
             text: 'Add'
             on_press: app.add_element(newItem.text)
-    Widget:
-        size_hint_y: .05
     RecycleView:
         id: rv
         data: app.data
