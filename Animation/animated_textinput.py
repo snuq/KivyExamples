@@ -114,13 +114,14 @@ BoxLayout:
             pos: self.pos
     orientation: 'vertical'
     spacing: 20
-    padding: self.width/8, self.height/3
+    padding: self.width/8, self.height/4
     NormalTextInput:
         underline_pos: 1
         background_color: 1, 1, 1, 0.2
     NormalTextInput:
+        size_hint_y: 0.5
         activate_time: 0.25
-        deactivate_time: 0.5
+        deactivate_time: 0.75
         rounded: 0
         background_border_color: 0, 0, 0, 0
         underline_pos: 0
@@ -129,6 +130,7 @@ BoxLayout:
         background_color_active: 1, 1, 1, 0
         hint_text_color: 1, 1, 1, 0.75
     NormalTextInput:
+        size_hint_y: 1.5
         activate_time: 0.25
         deactivate_time: 0.25
         rounded: 20
