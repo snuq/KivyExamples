@@ -133,7 +133,7 @@ BoxLayout:
         size_hint_y: 1.5
         activate_time: 0.25
         deactivate_time: 0.25
-        rounded: 20
+        rounded: 40
         background_border_color: 0, 0, 0, 0
         background_border_width: 3
         background_border_color: 1, 0, 0, 1
