@@ -38,7 +38,7 @@ Builder.load_string("""
             texture: self._hint_label_texture if self._hint_label_texture else None
     _underline_size: max(1, self.height / 10)
     padding: max(self.height / 8, self.rounded), self.height / 2.75, max(self.height / 8, self.rounded), self.height / 8
-    font_size: self.height * .45
+    font_size: self.height * .42
     multiline: False
 """)
 
