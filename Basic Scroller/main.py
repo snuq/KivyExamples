@@ -9,9 +9,9 @@ Config.set('input', 'mouse', 'mouse,disable_multitouch')
 KV = """
 BoxLayout:
     orientation: 'vertical'
-    BasicScroller:
-        exclude_widgets: [innerScrollerBar]
-        allow_drag: False
+    TouchScroller:
+        exclude_widgets: [innerScroller, innerScrollerBar]
+        allow_drag: True
         id: outerScroller
         BoxLayout:
             size_hint_x: None

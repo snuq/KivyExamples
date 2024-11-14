@@ -1,12 +1,10 @@
 from functools import partial
-from kivy.app import App
-from kivy.input.motionevent import MotionEvent
 from kivy.properties import NumericProperty, AliasProperty, ObjectProperty, ListProperty, ColorProperty, BooleanProperty
 from kivy.lang.builder import Builder
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.widget import Widget
 from kivy.clock import Clock
 from kivy.animation import Animation
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.stencilview import StencilView
 from kivy.config import Config
 # When we are generating documentation, Config doesn't exist
@@ -22,9 +20,11 @@ Builder.load_string("""
     canvas:
         Color:
             rgba: self._bar_color if (self.viewport_size[0] > self.scroller_size[0]) else [0, 0, 0, 0]
-        Rectangle:
+        RoundedRectangle:
+            radius: [self.rounding]
             pos: root._handle_x_pos or (0, 0)
             size: root._handle_x_size or (0, 0)
+    is_active: self.viewport_size[0] <= self.scroller_size[0]
     size_hint_y: None
     orientation: 'horizontal'
     height: 40
@@ -35,9 +35,11 @@ Builder.load_string("""
     canvas:
         Color:
             rgba: self._bar_color if (self.viewport_size[1] > self.scroller_size[1]) else [0, 0, 0, 0]
-        Rectangle:
+        RoundedRectangle:
+            radius: [self.rounding]
             pos: root._handle_y_pos or (0, 0)
             size: root._handle_y_size or (0, 0)
+    is_active: self.viewport_size[1] <= self.scroller_size[1]
     size_hint_x: None
     orientation: 'vertical'
     width: 40
@@ -58,6 +60,8 @@ class ScrollBar(BoxLayout):
     bar_inactive_color = ColorProperty([.7, .7, .7, .2])
     viewport_size = ListProperty([0, 0])
     scroller_size = ListProperty([0, 0])
+    rounding = NumericProperty(0)
+    is_active = BooleanProperty(True)
 
     _bar_color = ListProperty([0, 0, 0, 0])
     _bind_inactive_bar_color_ev = None
@@ -83,8 +87,12 @@ class ScrollBar(BoxLayout):
         super().__init__(**kwargs)
         self.update_bar_color()
 
+    def jump_bar(self, pos):
+        pass
+
     def on_touch_down(self, touch):
         if not self.disabled and self.collide_point(*touch.pos):
+            self.jump_bar(touch.pos)
             touch.grab(self)
             if 'button' in touch.profile and touch.button.startswith('scroll'):
                 btn = touch.button
@@ -132,15 +140,37 @@ class ScrollBarX(ScrollBar):
 
     scroll = NumericProperty(0.)
     def _get_hbar(self):
+        if self.width > 0:
+            min_width = self.height / self.width  #prevent scroller size from being too small
+        else:
+            min_width = 0
         vw = self.viewport_size[0]
         w = self.scroller_size[0]
         if vw < w or vw == 0:
             return 0, 1.
-        pw = max(0.01, w / float(vw))
+        pw = max(min_width, w / float(vw))
         sx = min(1.0, max(0.0, self.scroll))
         px = (1. - pw) * sx
         return (px, pw)
     hbar = AliasProperty(_get_hbar, bind=('scroller_size', 'scroll', 'viewport_size', 'width'), cache=True)
+
+    def in_hbar(self, pos_x):
+        local_x = pos_x - self.x
+        local_per = local_x / self.width
+        hbar = self.hbar
+        hbar_top = hbar[0] + hbar[1]
+        hbar_bottom = hbar[0]
+        half_hbar_height = hbar[1] / 2
+        if local_per > hbar_top:
+            return local_per - hbar_top + half_hbar_height
+        elif local_per < hbar_bottom:
+            return local_per - hbar_bottom - half_hbar_height
+        else:  #hbar_top > local_per > hbar_bottom:
+            return 0
+
+    def jump_bar(self, pos):
+        position = self.in_hbar(pos[0])
+        self.scroller.scroll_x += position
 
     def on_scroller(self, instance, value):
         super().on_scroller(instance, value)
@@ -180,15 +210,37 @@ class ScrollBarY(ScrollBar):
 
     scroll = NumericProperty(1.)
     def _get_vbar(self):
+        if self.height > 0:
+            min_height = self.width / self.height  #prevent scroller size from being too small
+        else:
+            min_height = 0
         vh = self.viewport_size[1]
         h = self.scroller_size[1]
         if vh < h or vh == 0:
             return 0, 1.
-        ph = max(0.01, h / float(vh))
+        ph = max(min_height, h / float(vh))
         sy = min(1.0, max(0.0, self.scroll))
         py = (1. - ph) * sy
         return (py, ph)
     vbar = AliasProperty(_get_vbar, bind=('scroller_size', 'scroll', 'viewport_size', 'height'), cache=True)
+
+    def in_vbar(self, pos_y):
+        local_y = pos_y - self.y
+        local_per = local_y / self.height
+        vbar = self.vbar
+        vbar_top = vbar[0] + vbar[1]
+        vbar_bottom = vbar[0]
+        half_vbar_height = vbar[1] / 2
+        if local_per > vbar_top:
+            return local_per - vbar_top + half_vbar_height
+        elif local_per < vbar_bottom:
+            return local_per - vbar_bottom - half_vbar_height
+        else:  #vbar_top > local_per > vbar_bottom:
+            return 0
+
+    def jump_bar(self, pos):
+        position = self.in_vbar(pos[1])
+        self.scroller.scroll_y += position
 
     def on_scroller(self, instance, value):
         super().on_scroller(instance, value)
@@ -224,23 +276,18 @@ class ScrollBarY(ScrollBar):
 
 
 class BasicScroller(StencilView):
-    """
-    Simplified version of Kivy's ScrollView.  Removes scrollbars and any touch control.
-    """
-
     scroll_x = NumericProperty(0.)
     scroll_y = NumericProperty(1.)
     viewport_size = ListProperty([0, 0])
-
     _viewport = ObjectProperty(None, allownone=True)
 
-    def _set_viewport_size(self, instance, value):
-        self.viewport_size = value
-
-    def on__viewport(self, instance, value):
-        if value:
-            value.bind(size=self._set_viewport_size)
-            self.viewport_size = value.size
+    _set_viewport_size = ScrollView._set_viewport_size
+    on__viewport = ScrollView.on__viewport
+    to_parent = ScrollView.to_parent
+    to_local = ScrollView.to_local
+    _apply_transform = ScrollView._apply_transform
+    scroll_to = ScrollView.scroll_to
+    convert_distance_to_scroll = ScrollView.convert_distance_to_scroll
 
     def __init__(self, **kwargs):
         self._trigger_update_from_scroll = Clock.create_trigger(
@@ -284,7 +331,7 @@ class BasicScroller(StencilView):
 
     def on_touch_down(self, touch):
         return self.do_touch_down(touch)
-        
+
     def on_touch_move(self, touch):
         return self.do_touch_move(touch)
 
@@ -300,104 +347,6 @@ class BasicScroller(StencilView):
 
     def do_touch_up(self, touch):
         return self.transformed_touch(touch, touch_type='up')
-
-    def to_local(self, x, y, **k):
-        tx, ty = self.g_translate.xy
-        return x - tx, y - ty
-
-    def to_parent(self, x, y, **k):
-        tx, ty = self.g_translate.xy
-        return x + tx, y + ty
-
-    def _apply_transform(self, m, pos=None):
-        tx, ty = self.g_translate.xy
-        m.translate(tx, ty, 0)
-        return super()._apply_transform(m, (0, 0))
-
-    def scroll_to_widget(self, widget, padding=10, animate=True):
-        '''Scrolls the viewport to ensure that the given widget is visible,
-        optionally with padding and animation. If animate is True (the
-        default), then the default animation parameters will be used.
-        Otherwise, it should be a dict containing arguments to pass to
-        :class:`~kivy.animation.Animation` constructor.
-        .. versionadded:: 1.9.1
-        '''
-        if not self.parent:
-            return
-
-        # if _viewport is layout and has pending operation, reschedule
-        if hasattr(self._viewport, 'do_layout'):
-            if self._viewport._trigger_layout.is_triggered:
-                Clock.schedule_once(
-                     lambda *dt: self.scroll_to_widget(widget, padding, animate))
-                return
-
-        if isinstance(padding, (int, float)):
-            padding = (padding, padding)
-
-        pos = self.parent.to_widget(*widget.to_window(*widget.pos))
-        cor = self.parent.to_widget(*widget.to_window(widget.right, widget.top))
-
-        dx = dy = 0
-
-        if pos[1] < self.y:
-            dy = self.y - pos[1] + dp(padding[1])
-        elif cor[1] > self.top:
-            dy = self.top - cor[1] - dp(padding[1])
-
-        if pos[0] < self.x:
-            dx = self.x - pos[0] + dp(padding[0])
-        elif cor[0] > self.right:
-            dx = self.right - cor[0] - dp(padding[0])
-
-        dsx, dsy = self.convert_distance_to_scroll(dx, dy)
-        sxp = min(1, max(0, self.scroll_x - dsx))
-        syp = min(1, max(0, self.scroll_y - dsy))
-
-        if animate:
-            if animate is True:
-                animate = {'d': 0.2, 't': 'out_quad'}
-            Animation.stop_all(self, 'scroll_x', 'scroll_y')
-            Animation(scroll_x=sxp, scroll_y=syp, **animate).start(self)
-        else:
-            self.scroll_x = sxp
-            self.scroll_y = syp
-
-    def scroll_to(self, per_x, per_y, animate=True):
-        sxp = min(1, max(0, per_x))
-        syp = min(1, max(0, per_y))
-        Animation.stop_all(self, 'scroll_x', 'scroll_y')
-        if animate:
-            if animate is True:
-                animate = {'d': 0.2, 't': 'out_quad'}
-            Animation(scroll_x=sxp, scroll_y=syp, **animate).start(self)
-        else:
-            self.scroll_x = sxp
-            self.scroll_y = syp
-
-    def scroll_by(self, per_x, per_y, animate=True):
-        self.scroll_to(self.scroll_x + per_x, self.scroll_y + per_y, animate=animate)
-
-    def convert_distance_to_scroll(self, dx, dy):
-        '''Convert a distance in pixels to a scroll distance, depending on the
-        content size and the scrollview size.
-        The result will be a tuple of scroll distance that can be added to
-        :data:`scroll_x` and :data:`scroll_y`
-        '''
-        if not self._viewport:
-            return 0, 0
-        vp = self._viewport
-        if vp.width > self.width:
-            sw = vp.width - self.width
-            sx = dx / float(sw)
-        else:
-            sx = 0
-        if vp.height > self.height:
-            sh = vp.height - self.height
-            sy = dy / float(sh)
-        else:
-            sy = 1
-        return sx, sy
 
     def update_from_scroll(self, *largs):
         '''Force the reposition of the content, according to current value of
@@ -491,6 +440,21 @@ class TouchScroller(BasicScroller):
     _start_scroll_x = 0
     _start_scroll_y = 0
 
+    def scroll_to_point(self, per_x, per_y, animate=True):
+        sxp = min(1, max(0, per_x))
+        syp = min(1, max(0, per_y))
+        Animation.stop_all(self, 'scroll_x', 'scroll_y')
+        if animate:
+            if animate is True:
+                animate = {'d': 0.2, 't': 'out_quad'}
+            Animation(scroll_x=sxp, scroll_y=syp, **animate).start(self)
+        else:
+            self.scroll_x = sxp
+            self.scroll_y = syp
+
+    def scroll_by(self, per_x, per_y, animate=True):
+        self.scroll_to_point(self.scroll_x + per_x, self.scroll_y + per_y, animate=animate)
+
     def do_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             for widget in self.exclude_widgets:
@@ -498,7 +462,7 @@ class TouchScroller(BasicScroller):
                 #touch.apply_transform_2d(self.to_local)
                 touch.apply_transform_2d(self.to_widget)
                 if widget.collide_point(*touch.pos):
-                    return super().on_touch_down(touch)
+                    return widget.on_touch_down(touch)
                 touch.pop()
 
             #delay touch to check if scroll is initiated
@@ -536,7 +500,7 @@ class TouchScroller(BasicScroller):
             if self.allow_flick and (dx or dy):
                 per_x = self.scroll_x - ((dx * 2) / self.width)
                 per_y = self.scroll_y - ((dy * 2) / self.height)
-                self.scroll_to(per_x, per_y)
+                self.scroll_to_point(per_x, per_y)
                 self._touch_delay = None
                 return True
             else:
@@ -580,7 +544,7 @@ class TouchScroller(BasicScroller):
                 per_y = self._start_scroll_y + (dy / (self.height - self.viewport_size[1]))
             else:
                 per_y = self._start_scroll_y
-            self.scroll_to(per_x, per_y, animate=animate)
+            self.scroll_to_point(per_x, per_y, animate=animate)
 
     def touch_moved_distance(self, touch, always=False):
         #determines if the touch has moved the required distance to allow for scrolling
