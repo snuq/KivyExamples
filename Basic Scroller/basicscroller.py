@@ -55,39 +55,33 @@ class ScrollBar(BoxLayout):
 
     scroll = NumericProperty()
     scroller = ObjectProperty(allownone=True)
-    scroll_wheel_distance = NumericProperty('20sp')
-    bar_color = ColorProperty([.7, .7, .7, .9])
-    bar_inactive_color = ColorProperty([.7, .7, .7, .2])
-    viewport_size = ListProperty([0, 0])
     scroller_size = ListProperty([0, 0])
     rounding = NumericProperty(0)
     is_active = BooleanProperty(True)
 
+    #borrow some functions and variables from ScrollView
+    scroll_wheel_distance = NumericProperty('20sp')
+    bar_color = ColorProperty([.7, .7, .7, .9])
+    bar_inactive_color = ColorProperty([.7, .7, .7, .2])
+    viewport_size = ListProperty([0, 0])
     _bar_color = ListProperty([0, 0, 0, 0])
     _bind_inactive_bar_color_ev = None
-
-    def _set_scroller_size(self, instance, value):
-        self.scroller_size = value
-
-    def _set_viewport_size(self, instance, value):
-        self.viewport_size = value
-
-    def _set_scroll(self, instance, value):
-        self.scroll = value
-
-    def _bind_inactive_bar_color(self, *l):
-        self.funbind('bar_color', self._change_bar_color)
-        self.fbind('bar_inactive_color', self._change_bar_color)
-        Animation(_bar_color=self.bar_inactive_color, d=.5, t='out_quart').start(self)
-
-    def _change_bar_color(self, inst, value):
-        self._bar_color = value
+    _set_viewport_size = ScrollView._set_viewport_size
+    _bind_inactive_bar_color = ScrollView._bind_inactive_bar_color
+    _change_bar_color = ScrollView._change_bar_color
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.update_bar_color()
 
+    def _set_scroller_size(self, instance, value):
+        self.scroller_size = value
+
+    def _set_scroll(self, instance, value):
+        self.scroll = value
+
     def jump_bar(self, pos):
+        #Placeholder for subclassed jump-to function
         pass
 
     def on_touch_down(self, touch):
@@ -111,9 +105,12 @@ class ScrollBar(BoxLayout):
             self.do_touch_scroll(touch)
 
     def do_touch_scroll(self, touch):
+        #Touch events should activate scrolling
+        #Splitting this into its own function to make it easier to subclass
         pass
 
     def on_scroller(self, instance, value):
+        #The scroller object has been set, create binds and set up local variables
         if value:
             value.bind(size=self._set_scroller_size)
             value.bind(viewport_size=self._set_viewport_size)
@@ -121,6 +118,7 @@ class ScrollBar(BoxLayout):
             self.viewport_size = value.viewport_size
 
     def update_bar_color(self):
+        #in original code, this was in update_from_scroll, but that extra code is not needed
         ev = self._bind_inactive_bar_color_ev
         if ev is None:
             ev = self._bind_inactive_bar_color_ev = Clock.create_trigger(
@@ -141,9 +139,10 @@ class ScrollBarX(ScrollBar):
     scroll = NumericProperty(0.)
     def _get_hbar(self):
         if self.width > 0:
-            min_width = self.height / self.width  #prevent scroller size from being too small
+            min_width = self.height / self.width  #mdified to prevent scroller size from being too small
         else:
             min_width = 0
+        #following code is copied directly from ScrollView
         vw = self.viewport_size[0]
         w = self.scroller_size[0]
         if vw < w or vw == 0:
@@ -155,6 +154,7 @@ class ScrollBarX(ScrollBar):
     hbar = AliasProperty(_get_hbar, bind=('scroller_size', 'scroll', 'viewport_size', 'width'), cache=True)
 
     def in_hbar(self, pos_x):
+        #convenience function to make it easy for jump_bar to check if click is valid
         local_x = pos_x - self.x
         local_per = local_x / self.width
         hbar = self.hbar
@@ -214,6 +214,7 @@ class ScrollBarY(ScrollBar):
             min_height = self.width / self.height  #prevent scroller size from being too small
         else:
             min_height = 0
+        #following code is copied directly from ScrollView
         vh = self.viewport_size[1]
         h = self.scroller_size[1]
         if vh < h or vh == 0:
@@ -225,6 +226,7 @@ class ScrollBarY(ScrollBar):
     vbar = AliasProperty(_get_vbar, bind=('scroller_size', 'scroll', 'viewport_size', 'height'), cache=True)
 
     def in_vbar(self, pos_y):
+        #convenience function to make it easy for jump_bar to check if click is valid
         local_y = pos_y - self.y
         local_per = local_y / self.height
         vbar = self.vbar
