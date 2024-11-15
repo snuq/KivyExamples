@@ -275,149 +275,9 @@ class ScrollBarY(ScrollBar):
         return False
 
 
-class BasicScroller(StencilView):
-    scroll_x = NumericProperty(0.)
-    scroll_y = NumericProperty(1.)
-    viewport_size = ListProperty([0, 0])
-    _viewport = ObjectProperty(None, allownone=True)
-
-    _set_viewport_size = ScrollView._set_viewport_size
-    on__viewport = ScrollView.on__viewport
-    to_parent = ScrollView.to_parent
-    to_local = ScrollView.to_local
-    _apply_transform = ScrollView._apply_transform
-    scroll_to = ScrollView.scroll_to
-    convert_distance_to_scroll = ScrollView.convert_distance_to_scroll
-
-    def __init__(self, **kwargs):
-        self._trigger_update_from_scroll = Clock.create_trigger(
-            self.update_from_scroll, -1)
-        # create a specific canvas for the viewport
-        from kivy.graphics import PushMatrix, Translate, PopMatrix, Canvas
-        self.canvas_viewport = Canvas()
-        self.canvas = Canvas()
-        with self.canvas_viewport.before:
-            PushMatrix()
-            self.g_translate = Translate(0, 0)
-        with self.canvas_viewport.after:
-            PopMatrix()
-
-        super().__init__(**kwargs)
-
-        # now add the viewport canvas to our canvas
-        self.canvas.add(self.canvas_viewport)
-
-        trigger_update_from_scroll = self._trigger_update_from_scroll
-        fbind = self.fbind
-        fbind('scroll_x', trigger_update_from_scroll)
-        fbind('scroll_y', trigger_update_from_scroll)
-        fbind('pos', trigger_update_from_scroll)
-        fbind('size', trigger_update_from_scroll)
-
-        trigger_update_from_scroll()
-
-    def transformed_touch(self, touch, touch_type='down'):
-        touch.push()
-        touch.apply_transform_2d(self.to_local)
-        #touch.apply_transform_2d(self.to_widget)
-        if touch_type == 'down':
-            ret = super().on_touch_down(touch)
-        elif touch_type == 'up':
-            ret = super().on_touch_up(touch)
-        elif touch_type == 'move':
-            ret = super().on_touch_move(touch)
-        touch.pop()
-        return ret
-
-    def on_touch_down(self, touch):
-        return self.do_touch_down(touch)
-
-    def on_touch_move(self, touch):
-        return self.do_touch_move(touch)
-
-    def on_touch_up(self, touch):
-        return self.do_touch_up(touch)
-
-    def do_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
-            return self.transformed_touch(touch, touch_type='down')
-
-    def do_touch_move(self, touch):
-        return self.transformed_touch(touch, touch_type='move')
-
-    def do_touch_up(self, touch):
-        return self.transformed_touch(touch, touch_type='up')
-
-    def update_from_scroll(self, *largs):
-        '''Force the reposition of the content, according to current value of
-        :attr:`scroll_x` and :attr:`scroll_y`.
-        This method is automatically called when one of the :attr:`scroll_x`,
-        :attr:`scroll_y`, :attr:`pos` or :attr:`size` properties change, or
-        if the size of the content changes.
-        '''
-        if not self._viewport:
-            self.g_translate.xy = self.pos
-            return
-        vp = self._viewport
-
-        # update from size_hint
-        if vp.size_hint_x is not None:
-            w = vp.size_hint_x * self.width
-            if vp.size_hint_min_x is not None:
-                w = max(w, vp.size_hint_min_x)
-            if vp.size_hint_max_x is not None:
-                w = min(w, vp.size_hint_max_x)
-            vp.width = w
-
-        if vp.size_hint_y is not None:
-            h = vp.size_hint_y * self.height
-            if vp.size_hint_min_y is not None:
-                h = max(h, vp.size_hint_min_y)
-            if vp.size_hint_max_y is not None:
-                h = min(h, vp.size_hint_max_y)
-            vp.height = h
-
-        if vp.width > self.width:
-            sw = vp.width - self.width
-            x = self.x - self.scroll_x * sw
-        else:
-            x = self.x
-
-        if vp.height > self.height:
-            sh = vp.height - self.height
-            y = self.y - self.scroll_y * sh
-        else:
-            y = self.top - vp.height
-
-        # from 1.8.0, we now use a matrix by default, instead of moving the
-        # widget position behind. We set it here, but it will be a no-op most
-        # of the time.
-        vp.pos = 0, 0
-        self.g_translate.xy = x, y
-
-    def add_widget(self, widget, *args, **kwargs):
-        if self._viewport:
-            raise Exception('ScrollView accept only one widget')
-        canvas = self.canvas
-        self.canvas = self.canvas_viewport
-        super().add_widget(widget, *args, **kwargs)
-        self.canvas = canvas
-        self._viewport = widget
-        widget.bind(size=self._trigger_update_from_scroll, size_hint_min=self._trigger_update_from_scroll)
-        self._trigger_update_from_scroll()
-
-    def remove_widget(self, widget, *args, **kwargs):
-        canvas = self.canvas
-        self.canvas = self.canvas_viewport
-        super().remove_widget(widget, *args, **kwargs)
-        self.canvas = canvas
-        if widget is self._viewport:
-            self._viewport = None
-
-
-class TouchScroller(BasicScroller):
+class TouchScroller(ScrollView):
     """
-    Modified version of Kivy's ScrollView widget, allows for finer control over touch events.
+    Modified version of Kivy's ScrollView widget, removes scrollbars and allows for finer control over touch events.
     allow_middle_mouse: set this to True to enable scrolling with the middle mouse button (blocks middle mouse clicks on child widgets).
     allow_flick: set this to True to enable touch 'flicks' to scroll the view.
     allow_drag: Set this to True to enable click-n-drag scrolling within the scrollview itself.
@@ -425,6 +285,7 @@ class TouchScroller(BasicScroller):
     exclude_widgets: ListProperty, add any child widgets to this, and they will receive all touches on them, blocking any touch controlls of this widget within their bounds.
     """
 
+    bar_width = NumericProperty(0)
     scroll_distance = NumericProperty(_scroll_distance)
     scroll_timeout = NumericProperty(_scroll_timeout)
     scroll_wheel_distance = NumericProperty('20sp')
@@ -439,6 +300,19 @@ class TouchScroller(BasicScroller):
     _touch_delay = None
     _start_scroll_x = 0
     _start_scroll_y = 0
+
+    def transformed_touch(self, touch, touch_type='down'):
+        touch.push()
+        touch.apply_transform_2d(self.to_local)
+        #touch.apply_transform_2d(self.to_widget)
+        if touch_type == 'down':
+            ret = StencilView.on_touch_down(self, touch)
+        elif touch_type == 'up':
+            ret = StencilView.on_touch_up(self, touch)
+        elif touch_type == 'move':
+            ret = StencilView.on_touch_move(self, touch)
+        touch.pop()
+        return ret
 
     def scroll_to_point(self, per_x, per_y, animate=True):
         sxp = min(1, max(0, per_x))
@@ -455,7 +329,7 @@ class TouchScroller(BasicScroller):
     def scroll_by(self, per_x, per_y, animate=True):
         self.scroll_to_point(self.scroll_x + per_x, self.scroll_y + per_y, animate=animate)
 
-    def do_touch_down(self, touch):
+    def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             for widget in self.exclude_widgets:
                 touch.push()
@@ -488,7 +362,7 @@ class TouchScroller(BasicScroller):
                 return self.transformed_touch(touch)
             return True
 
-    def do_touch_up(self, touch):
+    def on_touch_up(self, touch):
         if touch.grab_current == self:
             touch.ungrab(self)
         if self.allow_middle_mouse and 'button' in touch.profile and touch.button == 'middle':
@@ -521,7 +395,7 @@ class TouchScroller(BasicScroller):
             touch.apply_transform_2d(self.to_parent)
             return self.transformed_touch(touch)
 
-    def do_touch_move(self, touch):
+    def on_touch_move(self, touch):
         middle_button = 'button' in touch.profile and touch.button == 'middle'
         if not self.allow_drag and not middle_button:
             return

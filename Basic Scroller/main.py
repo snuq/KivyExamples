@@ -10,7 +10,7 @@ KV = """
 BoxLayout:
     orientation: 'vertical'
     TouchScroller:
-        exclude_widgets: [innerScroller, innerScrollerBar]
+        exclude_widgets: [innerScroller, innerScrollerBar, innerScroller2, innerScrollerBar2]
         allow_drag: True
         id: outerScroller
         BoxLayout:
@@ -18,10 +18,10 @@ BoxLayout:
             width: self.minimum_width
             BoxLayout:
                 size_hint: None, 1
-                width: 400
+                width: 600
                 TouchScroller:
                     allow_drag: True
-                    allow_flick: True
+                    allow_flick: False
                     id: innerScroller
                     BoxLayout:
                         orientation: 'vertical'
@@ -55,6 +55,23 @@ BoxLayout:
                 ScrollBarY:
                     id: innerScrollerBar
                     scroller: innerScroller
+                TouchScroller:
+                    allow_drag: True
+                    allow_flick: True
+                    allow_wheel: False
+                    id: innerScroller2
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        Button:
+                            text: 'First'
+                            size_hint: 1, None
+                            height: 2000
+                            on_release: print('clicked 1')
+                ScrollBarY:
+                    id: innerScrollerBar2
+                    scroller: innerScroller2
             Button:
                 size_hint_x: None
                 width: 600
