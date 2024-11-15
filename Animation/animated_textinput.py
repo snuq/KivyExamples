@@ -77,6 +77,10 @@ class NormalTextInput(TextInput):
     _hint_label_texture = AliasProperty(update_hint_label, bind=('size', 'font_size', 'hint_text_color', 'hint_text', '_activated_hint'))
     _hint_label_size = ListProperty([1, 1])
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._current_background_color = self.background_color
+
     def on_background_color(self, *_):
         self._current_background_color = self.background_color
 
