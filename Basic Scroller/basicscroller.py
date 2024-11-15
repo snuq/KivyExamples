@@ -24,10 +24,10 @@ Builder.load_string("""
             radius: [self.rounding]
             pos: root._handle_x_pos or (0, 0)
             size: root._handle_x_size or (0, 0)
-    is_active: self.viewport_size[0] <= self.scroller_size[0]
+    is_active: not self.viewport_size[0] <= self.scroller_size[0]
     size_hint_y: None
     orientation: 'horizontal'
-    height: 40
+    height: 40 if self.is_active else 0
 
 <ScrollBarY>:
     _handle_y_pos: self.x, self.y + self.height * self.vbar[0]
@@ -39,10 +39,10 @@ Builder.load_string("""
             radius: [self.rounding]
             pos: root._handle_y_pos or (0, 0)
             size: root._handle_y_size or (0, 0)
-    is_active: self.viewport_size[1] <= self.scroller_size[1]
+    is_active: not self.viewport_size[1] <= self.scroller_size[1]
     size_hint_x: None
     orientation: 'vertical'
-    width: 40
+    width: 40 if self.is_active else 0
 """)
 
 class ScrollBar(BoxLayout):
