@@ -31,7 +31,7 @@ Builder.load_string("""
             pos: self.x + (self.rounded / 2) + (self.width * self.underline_pos * (1 - self._activated)), self.y
             size: (self.width - self.rounded) * self._activated, self._underline_size
         Color:
-            rgba: self.hint_text_color
+            rgba: self.hint_text_color if root.animate_hint or not self.text else (0, 0, 0, 0)
         Rectangle:  #hint text
             size: self._hint_label_size
             pos: self.x + self.padding[0], self.y + self.height - self._hint_label_size[1] - (self.height * .2 * (1 - self._activated_hint))
@@ -51,7 +51,7 @@ class NormalTextInput(TextInput):
     background_border_color = ColorProperty((0, 0, 0, 0.5))  #Color of the border line
     background_border_width = NumericProperty(1)  #Thickness of the border line
     rounded = NumericProperty(4)  #Radius of rounded corners on background
-    show_hint_with_text = BooleanProperty(True)
+    animate_hint = BooleanProperty(True)
 
     _activated = NumericProperty(0)
     _activated_hint = NumericProperty(0)
@@ -93,15 +93,19 @@ class NormalTextInput(TextInput):
 
     def activate(self):
         self.stop_animation()
-        self._activate_animation = Animation(_activated=1, _activated_hint=1, _current_background_color=self.background_color_active, duration=self.activate_time)
+        if self.animate_hint:
+            activated_hint_target = 1
+        else:
+            activated_hint_target = 0
+        self._activate_animation = Animation(_activated=1, _activated_hint=activated_hint_target, _current_background_color=self.background_color_active, duration=self.activate_time)
         self._activate_animation.start(self)
 
     def deactivate(self):
         self.stop_animation()
-        if not self.text:
-            activated_hint_target = 0
-        else:
+        if self.text and self.animate_hint:
             activated_hint_target = 1
+        else:
+            activated_hint_target = 0
         self._activate_animation = Animation(_activated=0, _activated_hint=activated_hint_target, _current_background_color=self.background_color, duration=self.deactivate_time)
         self._activate_animation.start(self)
 
@@ -135,7 +139,7 @@ BoxLayout:
         background_color: 1, 1, 1, 0.2
         background_color_active: 1, 1, 1, 0
         hint_text_color: 1, 1, 1, 0.75
-        show_hint_with_text: False
+        animate_hint: False
     NormalTextInput:
         size_hint_y: 1.5
         activate_time: 0.25
