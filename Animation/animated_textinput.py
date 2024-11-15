@@ -1,7 +1,7 @@
 from kivy.animation import Animation
 from kivy.lang.builder import Builder
 from kivy.properties import *
-from kivy.uix.label import Label
+from kivy.core.text import Label as CoreLabel
 from kivy.uix.textinput import TextInput
 Builder.load_string("""
 <-NormalTextInput>:
@@ -63,17 +63,17 @@ class NormalTextInput(TextInput):
     _hint_min_size = NumericProperty(0)
     def update_hint_label(self):
         if not self._hint_label:
-            self._hint_label = Label(opacity=0, size_hint=(None, None), size=(0, 0))
+            self._hint_label = CoreLabel(text='')
         self._hint_label.color = 1, 1, 1, 1
         self._hint_label.text = self.hint_text
         self._hint_max_size = min(self.font_size, self.height * 0.5)
         self._hint_min_size = self._hint_max_size * 0.5
         target_range = self._hint_max_size - self._hint_min_size
-        self._hint_label.font_size = self._hint_min_size + target_range * (1 - self._activated_hint)
-        self._hint_label.texture_update()
-        if self._hint_label._label.texture:
-            self._hint_label_size = self._hint_label._label.texture.size
-        return self._hint_label._label.texture
+        self._hint_label.options['font_size'] = self._hint_min_size + target_range * (1 - self._activated_hint)
+        self._hint_label.refresh()
+        if self._hint_label.texture:
+            self._hint_label_size = self._hint_label.texture.size
+        return self._hint_label.texture
     _hint_label_texture = AliasProperty(update_hint_label, bind=('size', 'font_size', 'hint_text_color', 'hint_text', '_activated_hint'))
     _hint_label_size = ListProperty([1, 1])
 
