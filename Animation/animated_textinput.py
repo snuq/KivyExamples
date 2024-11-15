@@ -31,26 +31,27 @@ Builder.load_string("""
             pos: self.x + (self.rounded / 2) + (self.width * self.underline_pos * (1 - self._activated)), self.y
             size: (self.width - self.rounded) * self._activated, self._underline_size
         Color:
-            rgba: 1, 1, 1, 0.5
+            rgba: self.hint_text_color
         Rectangle:  #hint text
             size: self._hint_label_size
             pos: self.x + self.padding[0], self.y + self.height - self._hint_label_size[1] - (self.height * .2 * (1 - self._activated_hint))
             texture: self._hint_label_texture if self._hint_label_texture else None
     _underline_size: max(1, self.height / 10)
-    padding: max(self.height / 8, self.rounded), self.height / 2.75, max(self.height / 8, self.rounded), self.height / 8
-    font_size: self.height * .42
+    padding: max(self.height / 8, self.rounded), (self._hint_max_size * 0.3) + (self.height / 8), max(self.height / 8, self.rounded), self.height / 8
+    font_size: self.height * 0.5
     multiline: False
 """)
 
 class NormalTextInput(TextInput):
     hint_text = StringProperty("Enter Text Here")
     underline_pos = NumericProperty(0.5)  #Horizontal position (percent) from where the underline will grow from
-    activate_time = NumericProperty(0.5)  #Time in seconds for the animate in
-    deactivate_time = NumericProperty(0.25)  #Time in seconds for the animate out
+    activate_time = NumericProperty(0.2)  #Time in seconds for the animate in
+    deactivate_time = NumericProperty(0.2)  #Time in seconds for the animate out
     background_color_active = ColorProperty((1, 1, 1, 1))  #Color that the background will fade to when the text input is focused
     background_border_color = ColorProperty((0, 0, 0, 0.5))  #Color of the border line
     background_border_width = NumericProperty(1)  #Thickness of the border line
     rounded = NumericProperty(4)  #Radius of rounded corners on background
+    show_hint_with_text = BooleanProperty(True)
 
     _activated = NumericProperty(0)
     _activated_hint = NumericProperty(0)
@@ -58,12 +59,17 @@ class NormalTextInput(TextInput):
     _underline_size = NumericProperty(1)
     _current_background_color = ColorProperty()
     _hint_label = None
+    _hint_max_size = NumericProperty(0)
+    _hint_min_size = NumericProperty(0)
     def update_hint_label(self):
         if not self._hint_label:
-            self._hint_label = Label(opacity=0, disabled=True, size_hint=(None, None), size=(0, 0))
-        self._hint_label.color = self.hint_text_color
+            self._hint_label = Label(opacity=0, size_hint=(None, None), size=(0, 0))
+        self._hint_label.color = 1, 1, 1, 1
         self._hint_label.text = self.hint_text
-        self._hint_label.font_size = (0.3 + ((1 - self._activated_hint) / 4)) * self.height
+        self._hint_max_size = min(self.font_size, self.height * 0.5)
+        self._hint_min_size = self._hint_max_size * 0.5
+        target_range = self._hint_max_size - self._hint_min_size
+        self._hint_label.font_size = self._hint_min_size + target_range * (1 - self._activated_hint)
         self._hint_label.texture_update()
         if self._hint_label.texture:
             self._hint_label_size = self._hint_label.texture.size
@@ -129,6 +135,7 @@ BoxLayout:
         background_color: 1, 1, 1, 0.2
         background_color_active: 1, 1, 1, 0
         hint_text_color: 1, 1, 1, 0.75
+        show_hint_with_text: False
     NormalTextInput:
         size_hint_y: 1.5
         activate_time: 0.25
@@ -140,7 +147,7 @@ BoxLayout:
         underline_pos: 0.5
         background_color: 1, 1, 1, 1
         background_color_active: 1, 1, 1, 0.8
-        hint_text_color: 0, 0, 0, .75
+        hint_text_color: 1, 0, 0, 1
         """)
 
 Test().run()
