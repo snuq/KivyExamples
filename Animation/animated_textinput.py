@@ -71,9 +71,9 @@ class NormalTextInput(TextInput):
         target_range = self._hint_max_size - self._hint_min_size
         self._hint_label.font_size = self._hint_min_size + target_range * (1 - self._activated_hint)
         self._hint_label.texture_update()
-        if self._hint_label.texture:
-            self._hint_label_size = self._hint_label.texture.size
-        return self._hint_label.texture
+        if self._hint_label._label.texture:
+            self._hint_label_size = self._hint_label._label.texture.size
+        return self._hint_label._label.texture
     _hint_label_texture = AliasProperty(update_hint_label, bind=('size', 'font_size', 'hint_text_color', 'hint_text', '_activated_hint'))
     _hint_label_size = ListProperty([1, 1])
 
