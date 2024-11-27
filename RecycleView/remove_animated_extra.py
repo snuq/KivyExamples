@@ -33,6 +33,8 @@ RecycleView:
 class AnimatedRecycleBoxLayout(RecycleBoxLayout):
     remove_callback = ObjectProperty()  #needs to be set to a function that will actually remove this index from the data list and trigger a refresh
     remove_length = NumericProperty(.25)
+    slide_delay = NumericProperty(0.15)
+    slide_length = NumericProperty(0.25)
     _remove_animation = ObjectProperty(allownone=True)
     _move_animations = ListProperty()
     _original_data = []
@@ -45,10 +47,10 @@ class AnimatedRecycleBoxLayout(RecycleBoxLayout):
             for child in self.children:
                 self._original_data.append([child, child.pos, child.opacity])  #store un-animated data
                 if child.index > element.index:  #child element is lower in list, needs to be animated to show removal
-                    anim = Animation(y=child.y + element.height, duration=self.remove_length)
+                    anim = Animation(duration=self.slide_delay)+Animation(y=child.y + element.height, duration=self.slide_length)
                     anim.start(child)
                     self._move_animations.append(anim)
-            self._remove_animation = Animation(opacity=0, duration=self.remove_length, pos=(element.pos[0]-element.width, element.pos[1]))
+            self._remove_animation = Animation(opacity=0, duration=self.remove_length, pos=(element.pos[0]-element.width, element.pos[1]))+Animation(duration=max(self.slide_length+self.slide_delay-self.remove_length, 0))
             self._remove_animation.start(element)  #animate a fly-out and opacity fade on element being removed
             self._remove_animation.bind(on_complete=self.remove_finish)
 
