@@ -4,7 +4,7 @@ from kivy.animation import Animation
 from kivy.properties import ObjectProperty, StringProperty, ListProperty, BooleanProperty, AliasProperty, NumericProperty, DictProperty
 from kivy.lang.builder import Builder
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
-from kivy.uix.recycleboxlayout import RecycleBoxLayout
+from kivy.uix.recyclegridlayout import RecycleGridLayout
 from kivy.uix.boxlayout import BoxLayout
 KV = """
 <RecycleItem>:
@@ -23,18 +23,19 @@ RecycleView:
         spacing: 10
         default_size: None, dp(80)
         default_size_hint: 1, None
-        orientation: 'vertical'
+        cols: 1
         size_hint_y: None
         height: self.minimum_height
         remove_callback: app.delete_element
 """
 
 
-class AnimatedRecycleBoxLayout(RecycleBoxLayout):
+class AnimatedRecycleBoxLayout(RecycleGridLayout):
     remove_callback = ObjectProperty()  #needs to be set to a function that will actually remove this index from the data list and trigger a refresh
     remove_length = NumericProperty(0.25)
     slide_delay = NumericProperty(0.15)
     slide_length = NumericProperty(0.25)
+    remove_fly_out = BooleanProperty(False)
     _remove_animation = ObjectProperty(allownone=True)
     _move_animations = ListProperty()
     _original_data = []
@@ -48,11 +49,15 @@ class AnimatedRecycleBoxLayout(RecycleBoxLayout):
             for child in reversed(self.children):
                 self._original_data.append([child, child.pos, child.opacity])  #store un-animated data
                 if child.index == index:
-                    self._remove_animation = Animation(opacity=0, duration=self.remove_length, x=child.pos[0]-child.width)+Animation(duration=max(self.slide_length+self.slide_delay-self.remove_length, 0))
+                    if self.remove_fly_out:
+                        target_x = child.x-child.width
+                    else:
+                        target_x = child.x
+                    self._remove_animation = Animation(opacity=0, duration=self.remove_length, x=target_x)+Animation(duration=max(self.slide_length+self.slide_delay-self.remove_length, 0))
                     self._remove_animation.start(child)  #animate a fly-out and opacity fade on element being removed
                     self._remove_animation.bind(on_complete=self.remove_finish)
                 elif previous_child and child.index > index:  #child element is lower in list, needs to be animated to show removal
-                    anim = Animation(duration=self.slide_delay)+Animation(y=previous_child.y, duration=self.slide_length)
+                    anim = Animation(duration=self.slide_delay)+Animation(x=previous_child.x, y=previous_child.y, duration=self.slide_length)
                     anim.start(child)
                     self._move_animations.append(anim)
                 previous_child = child
