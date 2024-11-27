@@ -19,7 +19,7 @@ RecycleView:
     id: rv
     data: app.data
     viewclass: 'RecycleItem'
-    AnimatedRecycleBoxLayout:
+    AnimatedRecycleGridLayout:
         spacing: 10
         default_size: None, dp(80)
         default_size_hint: 1, None
@@ -30,7 +30,7 @@ RecycleView:
 """
 
 
-class AnimatedRecycleBoxLayout(RecycleGridLayout):
+class AnimatedRecycleGridLayout(RecycleGridLayout):
     remove_callback = ObjectProperty()  #needs to be set to a function that will actually remove this index from the data list and trigger a refresh
     remove_length = NumericProperty(0.25)
     slide_delay = NumericProperty(0.15)
