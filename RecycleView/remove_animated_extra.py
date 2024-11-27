@@ -40,19 +40,22 @@ class AnimatedRecycleBoxLayout(RecycleBoxLayout):
     _original_data = []
     _remove_index = NumericProperty()
 
-    def remove_element(self, element):
+    def remove_element(self, index):
         if not self._remove_animation:
             self._original_data = []
-            self._remove_index = element.index
-            for child in self.children:
+            self._remove_index = index
+            previous_child = None
+            for child in reversed(self.children):
                 self._original_data.append([child, child.pos, child.opacity])  #store un-animated data
-                if child.index > element.index:  #child element is lower in list, needs to be animated to show removal
-                    anim = Animation(duration=self.slide_delay)+Animation(y=child.y + element.height + self.spacing, duration=self.slide_length)
+                if child.index == index:
+                    self._remove_animation = Animation(opacity=0, duration=self.remove_length, x=child.pos[0]-child.width)+Animation(duration=max(self.slide_length+self.slide_delay-self.remove_length, 0))
+                    self._remove_animation.start(child)  #animate a fly-out and opacity fade on element being removed
+                    self._remove_animation.bind(on_complete=self.remove_finish)
+                elif previous_child and child.index > index:  #child element is lower in list, needs to be animated to show removal
+                    anim = Animation(duration=self.slide_delay)+Animation(y=previous_child.y, duration=self.slide_length)
                     anim.start(child)
                     self._move_animations.append(anim)
-            self._remove_animation = Animation(opacity=0, duration=self.remove_length, pos=(element.pos[0]-element.width, element.pos[1]))+Animation(duration=max(self.slide_length+self.slide_delay-self.remove_length, 0))
-            self._remove_animation.start(element)  #animate a fly-out and opacity fade on element being removed
-            self._remove_animation.bind(on_complete=self.remove_finish)
+                previous_child = child
 
     def remove_finish(self, *_):
         for move_animation in self._move_animations:  #just in case some animations end up going an extra frame, cancel them all
@@ -76,7 +79,7 @@ class RecycleItem(RecycleDataViewBehavior, BoxLayout):
         return super(RecycleItem, self).refresh_view_attrs(rv, index, data)
 
     def remove(self):
-        self.parent.remove_element(self)
+        self.parent.remove_element(self.index)
 
 
 class Test(App):
