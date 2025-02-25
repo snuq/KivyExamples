@@ -4,53 +4,42 @@ Example showing Recycleview elements that can toggle height based on a click.
 
 from kivy.app import App
 from kivy.properties import *
-from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.togglebutton import ToggleButton
 from kivy.lang.builder import Builder
 KV = """
-<RecycleItem>:
-
 RecycleView:
     data: app.data
     viewclass: 'RecycleItem'
     RecycleBoxLayout:
         spacing: 10
         default_size_hint: 1, None
-        default_size: None, 40
+        key_size: 'current_size'
         orientation: 'vertical'
         size_hint_y: None
         height: self.minimum_height
 """
 
-class RecycleItem(RecycleDataViewBehavior, ToggleButton):
+class RecycleItem(ToggleButton):
     small_height = 40
     large_height = 200
-    owner = ObjectProperty()
-    index = NumericProperty(0)
+    owner = ObjectProperty()  #stores the widget that holds the data list for easy access
+    index = NumericProperty(0)  #need to keep track of thiis to be able to update proper element of data list
 
-    def on_state(self, widget, state):
+    def on_state(self, widget, state):  #need to update recycleview's data as well as self
         self.owner.data[self.index]['state'] = state
-        self.set_height()
-
-    def set_height(self):
         if self.state == 'normal':
             target_height = self.small_height
         else:
             target_height = self.large_height
-        if self.height != target_height:
-            self.height = target_height
+        self.height = target_height
+        self.owner.data[self.index]['current_size'] = (0, target_height)
 
-    def refresh_view_attrs(self, rv, index, data):
-        self.index = index
-        return_data = super(RecycleItem, self).refresh_view_attrs(rv, index, data)
-        self.set_height()
-        return return_data
 
 class Test(App):
     data = ListProperty()
 
     def build(self):
-        self.data = [{"text": "Button "+str(x), 'owner': self, 'state': 'normal'} for x in range(20)]
+        self.data = [{"index": x, "text": "Button "+str(x), 'owner': self, 'state': 'normal', 'current_size': (0, RecycleItem.small_height)} for x in range(50)]
         return Builder.load_string(KV)
 
 Test().run()
