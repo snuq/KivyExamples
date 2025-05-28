@@ -1,50 +1,37 @@
 """Basic calculator made with as little code as possible.  Uses recycleview to generate buttons."""
 from kivy.app import App
 from kivy.lang.builder import Builder
-Builder.load_string("""
+KV = """
 <FormattedButton@Button>:
     font_size: self.height / 2
-    opacity: 0 if not self.text else 1      #Hide the button if it has no text for easier layouts
 
 <CalcButton@FormattedButton>:
-    on_release: self.parent.calculator_input.insert_text(self.text)
+    on_release: app.root.ids['calculator_input'].insert_text(self.text)
 
-<Calculator@BoxLayout>:
+BoxLayout:
     orientation: 'vertical'
     TextInput:
         id: calculator_input
         font_size: self.height / 2
-        size_hint_y: .25
+        size_hint_y: .2
         hint_text: '0.0'
     RecycleView:
-        data: [{'text': '7'}, {'text': '8'}, {'text': '9'}, {'text': '/'}, {'text': '4'}, {'text': '5'}, {'text': '6'}, {'text': '*'}, {'text': '1'}, {'text': '2'}, {'text': '3'}, {'text': '-'}, {'text': '0'}, {'text': '.'}, {'text': ''}, {'text': '+'}]
+        data: [{'text': '7'}, {'text': '8'}, {'text': '9'}, {'text': '/'}, {'text': '4'}, {'text': '5'}, {'text': '6'}, {'text': '*'}, {'text': '1'}, {'text': '2'}, {'text': '3'}, {'text': '-'}, {'text': '0'}, {'text': '.'}, {'widget': 'Widget'}, {'text': '+'}, {'text': 'Clr', 'widget': 'FormattedButton', 'on_release': lambda: setattr(calculator_input, 'text', '')}, {'text': '<-', 'widget': 'FormattedButton', 'on_release': lambda: calculator_input.do_backspace()}, {'widget': 'Widget'}, {'text': '=', 'widget': 'FormattedButton', 'on_release': lambda: app.calculate(calculator_input)}]
         viewclass: 'CalcButton'
+        key_viewclass: 'widget'
         RecycleGridLayout:
-            calculator_input: calculator_input
             cols: 4
             default_size_hint: 1, 1
-    BoxLayout:
-        size_hint_y: .25
-        FormattedButton:
-            text: 'Clr'
-            on_release: calculator_input.text = ''
-        FormattedButton:
-            text: '<-'
-            on_release: calculator_input.do_backspace()
-        FormattedButton:
-            size_hint_x: 2
-            text: '='
-            on_release: calculator_input.text = app.calculate(calculator_input.text)
-""")
+"""
 
 class Calculator(App):
-    def calculate(self, text):
+    def calculate(self, calculator_input):
         try:
-            return str(eval(text))      #this is actually kinda dangerous, since it will run code too!
+            calculator_input.text = str(eval(calculator_input.text))
         except:
-            return ''
+            calculator_input.text = ''
 
     def build(self):
-        return Builder.load_string("Calculator:")
+        return Builder.load_string(KV)
 
 Calculator().run()
