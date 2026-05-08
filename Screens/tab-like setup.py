@@ -1,8 +1,6 @@
 """Examle showing how to create a tabbed interface using screenmanager."""
 from kivy.app import App
-from kivy.uix.screenmanager import Screen
 from kivy.lang import Builder
-from kivy.clock import Clock
 KV = """
 BoxLayout:
     orientation: 'vertical'
