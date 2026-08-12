@@ -44,7 +44,6 @@ starting = [
 
 class ChessBoard(RelativeLayout):
     board_squares = []
-    board_colors = []
     selected_piece = ObjectProperty(allownone=True)
 
     def __init__(self, **kwargs):
@@ -99,24 +98,28 @@ class ChessBoard(RelativeLayout):
 
     def draw_board(self):
         #create the board elements and add them to the canvas, but dont position them
-        black = 0.1, 0.1, 0.1
-        white = 0.9, 0.9, 0.9
         is_white = True
         self.board_squares = []
-        self.board_colors = []
+        b_squares = []
+        w_squares = []
         for y in range(8):
             for x in range(8):
-                if is_white:
-                    color = Color(rgb=white)
-                else:
-                    color = Color(rgb=black)
                 square = Rectangle()
-                self.canvas.before.add(color)
-                self.canvas.before.add(square)
-                self.board_colors.append(color)
+                if is_white:
+                    w_squares.append(square)
+                else:
+                    b_squares.append(square)
                 self.board_squares.append([x, y, square])
                 is_white = not is_white
             is_white = not is_white
+
+        #grouping all black and white squares, only need two color elements instead of one per square
+        self.canvas.before.add(Color(rgb=(0.1, 0.1, 0.1)))
+        for square in b_squares:
+            self.canvas.before.add(square)
+        self.canvas.before.add(Color(rgb=(0.9, 0.9, 0.9)))
+        for square in w_squares:
+            self.canvas.before.add(square)
 
     def redraw_board(self):
         #positions canvas elements, moving is quicker than removing and adding new elements
