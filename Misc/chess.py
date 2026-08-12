@@ -43,14 +43,22 @@ starting = [
 ]
 
 class ChessBoard(RelativeLayout):
+    board_squares = []
+    board_colors = []
     selected_piece = ObjectProperty(allownone=True)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.draw_board()
+
     def setup_board(self, pieces):
+        #sets up the board pieces widgets
         self.clear_widgets()
         for piece in pieces:
             self.setup_piece(piece)
 
     def setup_piece(self, notation):
+        #sets up a single piece on the board
         side = notation[0]
         piece_type = notation[1]
         row = int(notation[2]) - 1
@@ -59,6 +67,7 @@ class ChessBoard(RelativeLayout):
         self.add_widget(piece)
 
     def find_piece(self, grid_x, grid_y):
+        #checks if a piece is at a grid point, returns piece if found
         for piece in self.children:
             if piece.grid_x == grid_x and piece.grid_y == grid_y:
                 return piece
@@ -81,27 +90,43 @@ class ChessBoard(RelativeLayout):
                 super().on_touch_down(touch)
 
     def on_size(self, *_):
-        self.draw_board()
+        self.redraw_board()
 
     def on_pos(self, *_):
-        self.draw_board()
+        #might not be necessary depending on your layout, only add if board position might change without the size changing
+        return
+        self.redraw_board()
 
     def draw_board(self):
+        #create the board elements and add them to the canvas, but dont position them
         black = 0.1, 0.1, 0.1
         white = 0.9, 0.9, 0.9
         is_white = True
+        self.board_squares = []
+        self.board_colors = []
+        for y in range(8):
+            for x in range(8):
+                if is_white:
+                    color = Color(rgb=white)
+                else:
+                    color = Color(rgb=black)
+                square = Rectangle()
+                self.canvas.before.add(color)
+                self.canvas.before.add(square)
+                self.board_colors.append(color)
+                self.board_squares.append([x, y, square])
+                is_white = not is_white
+            is_white = not is_white
+
+    def redraw_board(self):
+        #positions canvas elements, moving is quicker than removing and adding new elements
         grid_size_x = self.width / 8
         grid_size_y = self.height / 8
-        with self.canvas.before:
-            for y in range(8):
-                for x in range(8):
-                    if is_white:
-                        Color(rgb=white)
-                    else:
-                        Color(rgb=black)
-                    Rectangle(pos=(grid_size_x * x, grid_size_y * y), size=(grid_size_x, grid_size_y))
-                    is_white = not is_white
-                is_white = not is_white
+        for square_info in self.board_squares:
+            x, y, square = square_info
+            square.pos = (grid_size_x * x, grid_size_y * y)
+            square.size = (grid_size_x, grid_size_y)
+
 
 class ChessPiece(Label):
     selected = BooleanProperty(False)
@@ -123,14 +148,17 @@ class ChessPiece(Label):
         Clock.schedule_once(self.remove_self, animation_speed * 2)
 
     def remove_self(self, *_):
+        #this piece has been captured, remove it from the board
         self.parent.remove_widget(self)
 
     def move(self, grid_x, grid_y, delay=0.0):
+        #move this piece to a different grid position
         anim = Animation(duration=delay) + Animation(grid_x=grid_x, grid_y=grid_y, t='in_quad', duration=animation_speed)
         anim.start(self)
         self.moved()
 
     def moved(self):
+        #called once a move is completed
         self.selected = False
         if self.parent.selected_piece == self:
             self.parent.selected_piece = None
